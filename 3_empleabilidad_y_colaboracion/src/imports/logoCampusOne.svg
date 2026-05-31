@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="219.99998mm"
+   height="214.27928mm"
+   viewBox="0 0 219.99997 214.27929"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.4.2 (f4327f4, 2025-05-13)"
+   sodipodi:docname="logoCampusOneClaro.svg"
+   inkscape:export-filename="logoCampusOne.png"
+   inkscape:export-xdpi="88.970558"
+   inkscape:export-ydpi="88.970558"
+   inkscape:export-batch-path="C:\Users\Rafael Bugueño\Desktop\iconos Tech HUB\logos"
+   inkscape:export-batch-name="logo2"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#505050"
+     inkscape:document-units="mm"
+     inkscape:zoom="0.35355339"
+     inkscape:cx="370.52395"
+     inkscape:cy="677.4083"
+     inkscape:window-width="1366"
+     inkscape:window-height="697"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer2"
+     showgrid="true"
+     inkscape:clip-to-page="false"
+     showborder="true">
+    <inkscape:grid
+       id="grid10"
+       units="mm"
+       originx="0"
+       originy="4.2792989"
+       spacingx="0.99999997"
+       spacingy="0.99999997"
+       empcolor="#0099e5"
+       empopacity="0.30196078"
+       color="#0099e5"
+       opacity="0.14901961"
+       empspacing="5"
+       enabled="true"
+       visible="false" />
+  </sodipodi:namedview>
+  <defs
+     id="defs1" />
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="fondos"
+     style="display:inline"
+     transform="translate(0,4.2792988)" />
+  <g
+     inkscape:groupmode="layer"
+     id="layer3"
+     inkscape:label="triangulos"
+     transform="translate(0,4.2792988)">
+    <path
+       style="fill:#cf142b;fill-opacity:1;stroke:none;stroke-width:0.525331"
+       inkscape:label="Triangle"
+       d="M 189.6983,160.47596 H 94.999995 L 189.6983,109.99999 Z"
+       id="path6" />
+    <path
+       style="fill:#cf142b;fill-opacity:1;stroke:none;stroke-width:0.241422"
+       inkscape:label="Triangle"
+       d="m 189.6983,30.475975 h -20 l 20,50.47597 z"
+       id="path17" />
+    <path
+       style="fill:#800000;fill-opacity:1;stroke:none;stroke-width:0.337367"
+       inkscape:label="Triangle"
+       d="M 189.6983,14.524033 H 99.698305 L 189.6983,36.427918 Z"
+       id="path18" />
+    <path
+       style="fill:#800000;fill-opacity:1;stroke:none;stroke-width:0.269918"
+       inkscape:label="Triangle"
+       d="m 189.6983,160.47596 h -25 l 25,-50.47597 z"
+       id="path23" />
+  </g>
+  <g
+     inkscape:label="Capa 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-0.79091835,2.8379042)">
+    <text
+       xml:space="preserve"
+       style="font-size:29.3235px;font-family:'Museo Sans';-inkscape-font-specification:'Museo Sans';text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;display:inline;fill:#000000;fill-opacity:1;stroke-width:0.152967"
+       x="34.551296"
+       y="186.71861"
+       id="text4-8-8"
+       transform="scale(0.99533185,1.00469)"><tspan
+         sodipodi:role="line"
+         style="fill:#000000;fill-opacity:1;stroke-width:0.152967"
+         x="34.551296"
+         y="186.71861"
+         id="tspan5-2-2"
+         dx="0 0 0 0 0 0 0 0 0 0"><tspan
+   style="letter-spacing:-1.42344px;fill:#000000;fill-opacity:1;stroke-width:0.152967"
+   id="tspan4-4"
+   dx="0">CampusOne</tspan> </tspan></text>
+    <path
+       d="M 90.489119,161.91722 A 54.999996,54.999992 0 0 1 35.489376,106.91747 v 54.99975 z"
+       style="display:inline;fill:#000080;stroke-width:7.99999"
+       id="path26" />
+    <ellipse
+       style="fill:#000080;fill-opacity:1;stroke-width:7.99999"
+       id="path27"
+       cx="67.989235"
+       cy="134.41734"
+       rx="7.4999995"
+       ry="7.499999" />
+    <path
+       d="M 95.849395,21.917371 A 79.761772,72.417697 0 0 0 37.634226,91.642817 79.761772,72.417697 0 0 0 53.559864,134.97028 76.717649,69.653862 0 0 1 52.977876,126.9118 76.717649,69.653862 0 0 1 129.69559,57.257863 76.717649,69.653862 0 0 1 180.48922,74.805487 L 163.9779,36.971767 Z"
+       style="fill:#000080;fill-opacity:1;stroke-width:9.00753"
+       id="path13" />
+    <ellipse
+       style="fill:#cf142b;fill-opacity:1;stroke-width:33.3333"
+       id="ellipse19"
+       cx="114.23923"
+       cy="101.91737"
+       rx="31.250002"
+       ry="31.249998" />
+  </g>
+</svg>

@@ -1,0 +1,9 @@
+@import 'tailwindcss' source(none);
+@source '../**/*.{js,ts,jsx,tsx}';
+@source '../../2_rating_y_analytics/src/**/*.{js,ts,jsx,tsx}';
+@source '../../3_empleabilidad_y_colaboracion/src/**/*.{js,ts,jsx,tsx}';
+@source '../../4_eficiencia_administrativa_sin_cuenta/src/**/*.{js,ts,jsx,tsx}';
+@source '../../4_eficiencia_administrativa_con_cuenta/src/**/*.{js,ts,jsx,tsx}';
+@source '../../5_networking_y_match_academico/src/**/*.{js,ts,jsx,tsx}';
+
+@import 'tw-animate-css';

@@ -1,0 +1,112 @@
+/* Rating & Analytics module — CSS variable overrides */
+/* Applied via .rating-module wrapper class in RatingApp */
+.rating-module {
+  --sidebar: hsl(218, 100%, 26%);        /* ULS Blue #003082 */
+  --sidebar-foreground: hsl(0, 0%, 100%);
+  --sidebar-primary: hsl(0, 0%, 100%);
+  --sidebar-primary-foreground: hsl(218, 100%, 26%);
+  --sidebar-accent: hsl(218, 80%, 32%);
+  --sidebar-accent-foreground: hsl(0, 0%, 100%);
+  --sidebar-border: hsl(218, 60%, 35%);
+  --sidebar-ring: hsl(0, 0%, 100%);
+
+  /* Tailwind v4 color token mapping */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Primary color for rating module (ULS Blue) */
+  --primary: hsl(218, 100%, 26%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  /* Background */
+  --background: hsl(210, 33%, 97%);
+  --color-background: var(--background);
+
+  /* Font families used in rating module */
+  font-family: 'Inter', 'DM Sans', system-ui, sans-serif;
+}
+
+/* transition-smooth utility used by rating module */
+.transition-smooth {
+  transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* font-display used in rating module headings */
+.font-display, .rating-module h1, .rating-module h2, .rating-module h3 {
+  font-family: 'Syne', 'Inter', sans-serif;
+  letter-spacing: -0.01em;
+}
+
+/* shadow utilities from rating module */
+.shadow-card {
+  box-shadow: 0 1px 3px hsl(217 33% 17% / 0.06), 0 1px 2px hsl(217 33% 17% / 0.04);
+}
+.shadow-elev {
+  box-shadow: 0 10px 30px -12px hsl(218 100% 26% / 0.18);
+}
+
+/* animate-in utility for rating pages */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-in.fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+/* Networking module — sidebar matches the blue design */
+.networking-module {
+  font-family: 'Museo Sans', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* ─── Rating module: custom Tailwind v4 color tokens ─── */
+/* These extend the root @theme so Tailwind utility classes work inside .rating-module */
+@layer base {
+  :root {
+    /* Success — ULS green accent */
+    --success: hsl(152, 67%, 42%);
+    --success-foreground: hsl(0, 0%, 100%);
+    /* Warning — amber */
+    --warning: hsl(38, 92%, 50%);
+    --warning-foreground: hsl(0, 0%, 100%);
+    /* Gold — gamification */
+    --gold: hsl(43, 90%, 58%);
+    --gold-foreground: hsl(43, 60%, 20%);
+    /* Primary soft — light blue tint for icon backgrounds */
+    --primary-soft: hsl(218, 100%, 96%);
+  }
+}
+
+@theme inline {
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-gold: var(--gold);
+  --color-gold-foreground: var(--gold-foreground);
+  --color-primary-soft: var(--primary-soft);
+
+  /* Gradient utilities */
+  --bg-gradient-primary: linear-gradient(135deg, hsl(218, 100%, 26%), hsl(210, 90%, 45%));
+  --bg-gradient-soft: linear-gradient(135deg, hsl(218, 100%, 96%), hsl(210, 80%, 92%));
+  --bg-gradient-gold: linear-gradient(135deg, hsl(43, 90%, 58%), hsl(35, 85%, 50%));
+}
+
+/* font-display utility — Syne font for rating headings */
+.font-display {
+  font-family: 'Syne', 'Inter', sans-serif;
+  letter-spacing: -0.01em;
+}
+
+/* Gradient background utilities */
+.bg-gradient-primary { background: linear-gradient(135deg, hsl(218, 100%, 26%), hsl(210, 90%, 45%)); }
+.bg-gradient-soft    { background: linear-gradient(135deg, hsl(218, 100%, 96%), hsl(210, 80%, 92%)); }
+.bg-gradient-gold    { background: linear-gradient(135deg, hsl(43, 90%, 58%), hsl(35, 85%, 50%)); }
