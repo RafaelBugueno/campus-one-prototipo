@@ -8,7 +8,7 @@ interface MatchUser {
   career: string;
   year: string;
   level: string;
-  type: 'Estudiante' | 'Mentor' | 'Expositor';
+  type: 'Estudiante' | 'Mentor' | 'Expositor' | 'Administrador';
   interests: string[];
   match: number;
   avatar?: string;
