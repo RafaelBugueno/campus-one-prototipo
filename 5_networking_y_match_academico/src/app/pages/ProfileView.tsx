@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router';
+import { useParams, useNavigate, useLocation } from 'react-router'; // Se añade useLocation para interceptar estados de navegación
 import { useState, useEffect } from 'react';
 import { Navbar } from '../components/Navbar';
 import { Sidebar } from '../components/Sidebar';
@@ -48,6 +48,7 @@ interface SelectionState {
 export default function ProfileView() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation(); // Hook para leer propiedades invisibles del router (state)
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [openChat, setOpenChat] = useState(false);
@@ -137,6 +138,7 @@ export default function ProfileView() {
     'Viernes-11:00'
   ];
 
+  // Listener para el colapso de la barra lateral
   useEffect(() => {
     const handleSidebarState = () => {
       setSidebarCollapsed((prev) => !prev);
@@ -148,6 +150,17 @@ export default function ProfileView() {
       window.removeEventListener('toggle-sidebar-state', handleSidebarState);
     };
   }, []);
+
+  // Intercepta si el usuario viene redirigido con la instrucción de abrir el chat automáticamente
+  useEffect(() => {
+    if (location.state && (location.state as any).autoOpenChat) {
+      setOpenChat(true);
+      setConnectStatus('pending');
+      
+      // Limpia el estado de navegación para evitar reaperturas involuntarias al refrescar
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location, navigate]);
 
   const roleIcon = {
     Estudiante: GraduationCap,
