@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Navbar } from '../components/Navbar';
 import { Sidebar } from '../components/Sidebar';
 import { FloatingWidgets } from '../components/FloatingWidgets';
@@ -12,7 +12,13 @@ import {
   FileText,
   Sparkles,
   Save,
-  Eye,
+  BadgeCheck,
+  Calendar as CalendarIcon,
+  Send,
+  Heart,
+  MessageCircle,
+  Share2,
+  Image as ImageIcon
 } from 'lucide-react';
 import {
   Select,
@@ -24,21 +30,49 @@ import {
 
 const primaryColor = 'rgb(0,123,255)';
 const darkBlue = 'rgb(0,50,130)';
+const accentColor = '#C8102E';
+
+interface Post {
+  id: number;
+  author: string;
+  role: string;
+  content: string;
+  image?: string; // URL o Base64 de la imagen adjunta
+  date: string;
+  likes: number;
+  comments: number;
+}
 
 export default function EditProfile() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Estados del perfil
   const [career, setCareer] = useState('Ingeniería en Computación');
   const [description, setDescription] = useState(
     'Apasionada por el desarrollo web y la IA.'
   );
-
   const [interests, setInterests] = useState<string[]>([
     'Machine Learning',
     'Frontend',
   ]);
-
   const [newInterest, setNewInterest] = useState('');
+
+  // Estados para publicaciones e imágenes multimedia
+  const [newPostContent, setNewPostContent] = useState('');
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  
+  const [posts, setPosts] = useState<Post[]>([
+    {
+      id: 1,
+      author: 'María López Retamales',
+      role: 'Estudiante • Ingeniería en Computación',
+      content: '¡Acabo de actualizar mi perfil! Emocionada por comenzar los nuevos proyectos de Machine Learning este semestre. 🚀',
+      date: 'Hace 5 minutos',
+      likes: 4,
+      comments: 0
+    }
+  ]);
 
   const careers = [
     'Ingeniería en Computación',
@@ -72,6 +106,42 @@ export default function EditProfile() {
     setInterests(interests.filter((_, i) => i !== index));
   };
 
+  // Manejador para cargar la imagen localmente
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setSelectedImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveSelectedImage = () => {
+    setSelectedImage(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handlePublishPost = () => {
+    if (!newPostContent.trim() && !selectedImage) return;
+
+    const newPost: Post = {
+      id: Date.now(),
+      author: 'María López Retamales',
+      role: `Estudiante • ${career}`,
+      content: newPostContent.trim(),
+      image: selectedImage || undefined,
+      date: 'Ahora mismo',
+      likes: 0,
+      comments: 0
+    };
+
+    setPosts([newPost, ...posts]);
+    setNewPostContent('');
+    handleRemoveSelectedImage();
+  };
+
   return (
     <div className="min-h-screen bg-slate-50">
       <Sidebar />
@@ -86,54 +156,277 @@ export default function EditProfile() {
         `}
       >
         <div className="mx-auto max-w-6xl">
+          {/* Encabezado de la página */}
           <div className="mb-8">
             <span className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">
               Perfil personal
             </span>
-
             <h1 className="mt-2 text-3xl font-bold text-slate-900">
               Editar Perfil
             </h1>
-
             <p className="mt-2 text-sm text-slate-500">
-              Actualiza tu información académica, descripción e intereses para
-              mejorar tus recomendaciones.
+              Actualiza tu información académica, interactúa con la comunidad y gestiona tus intereses.
             </p>
           </div>
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-            <div className="lg:col-span-2">
+            
+            {/* ========================================================================= */}
+            {/* COLUMNA IZQUIERDA: VISTA PREVIA DEL PERFIL + SISTEMA DE PUBLICACIONES     */}
+            {/* ========================================================================= */}
+            <div className="lg:col-span-2 space-y-6">
+              
+              {/* Tarjeta de Perfil Principal */}
               <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <div
+                  className="h-32"
+                  style={{
+                    background: `linear-gradient(135deg, ${darkBlue}, ${primaryColor})`,
+                  }}
+                />
+
+                <div className="px-6 pb-6">
+                  <div className="-mt-16 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+                    <div className="flex flex-col gap-5 md:flex-row md:items-end">
+                      <div className="flex h-32 w-32 shrink-0 items-center justify-center rounded-2xl border-4 border-white bg-slate-100 shadow-md">
+                        <User className="h-16 w-16 text-slate-400" />
+                      </div>
+
+                      <div className="pb-1">
+                        <h2 className="text-3xl font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.4)]">
+                          María López Retamales
+                        </h2>
+                        <p className="mt-1 text-sm text-slate-500">
+                          20.968.604-k
+                        </p>
+
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+                            <GraduationCap className="h-3.5 w-3.5" />
+                            Estudiante
+                          </span>
+                          <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+                            <BadgeCheck className="h-3.5 w-3.5" />
+                            3° Nivel
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 h-[3px] w-24 rounded-full" style={{ backgroundColor: accentColor }} />
+
+                  {/* Distribución interna de Información */}
+                  <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+                    <div className="lg:col-span-2">
+                      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 h-full flex flex-col justify-between">
+                        <div>
+                          <h3 className="mb-2 text-sm font-bold uppercase tracking-wider text-slate-400">
+                            Descripción
+                          </h3>
+                          <p className="text-sm leading-relaxed text-slate-600">
+                            {description || <span className="italic text-slate-400">Sin descripción...</span>}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                      <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-slate-400">
+                        Información académica
+                      </h3>
+                      <div className="space-y-3">
+                        <div className="flex gap-3">
+                          <GraduationCap className="mt-0.5 h-4 w-4 text-slate-400" />
+                          <div>
+                            <p className="text-xs text-slate-400">Carrera</p>
+                            <p className="text-sm font-medium text-slate-700">{career}</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-3">
+                          <CalendarIcon className="mt-0.5 h-4 w-4 text-slate-400" />
+                          <div>
+                            <p className="text-xs text-slate-400">Año ingreso</p>
+                            <p className="text-sm font-medium text-slate-700">2021</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Sección de Intereses */}
+                  <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4">
+                    <h3 className="mb-3 flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-slate-400">
+                      <Sparkles className="h-4 w-4 text-blue-500" />
+                      Intereses
+                    </h3>
+                    {interests.length === 0 ? (
+                      <p className="text-sm text-slate-400">Este perfil no tiene intereses registrados.</p>
+                    ) : (
+                      <div className="flex flex-wrap gap-2">
+                        {interests.map((interest, index) => (
+                          <span
+                            key={index}
+                            className="rounded-full bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700"
+                          >
+                            {interest}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* ========================================================================= */}
+              {/* RECUADRO DE PUBLICAR CON CARGA DE IMAGEN                                  */}
+              {/* ========================================================================= */}
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <h3 className="mb-3 text-base font-bold text-slate-900">Crear Publicación</h3>
+                <div className="flex gap-3 items-start">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 border border-slate-200">
+                    <User className="h-5 w-5 text-slate-500" />
+                  </div>
+                  <div className="w-full space-y-3">
+                    <textarea
+                      placeholder="¿Qué estás pensando o investigando hoy? Comparte una imagen o texto..."
+                      className="
+                        min-h-[85px] w-full resize-none rounded-xl
+                        border border-slate-200 bg-slate-50/50 p-3
+                        text-sm text-slate-700 outline-none
+                        transition focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100
+                      "
+                      value={newPostContent}
+                      onChange={(e) => setNewPostContent(e.target.value)}
+                    />
+
+                    {/* Previsualización de la imagen cargada */}
+                    {selectedImage && (
+                      <div className="relative inline-block mt-2 rounded-xl overflow-hidden border border-slate-200 max-h-60 bg-slate-50">
+                        <img src={selectedImage} alt="Adjunto" className="object-cover max-h-60 w-auto rounded-xl" />
+                        <button
+                          onClick={handleRemoveSelectedImage}
+                          className="absolute top-2 right-2 p-1.5 rounded-full bg-slate-900/70 text-white hover:bg-slate-900 transition"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Input file oculto */}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      ref={fileInputRef}
+                      onChange={handleImageChange}
+                      className="hidden"
+                    />
+
+                    <div className="flex justify-between items-center pt-1">
+                      {/* Botón multimedia */}
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-blue-600 transition p-2 rounded-lg hover:bg-slate-50"
+                      >
+                        <ImageIcon className="h-4 w-4 text-blue-500" />
+                        <span>Adjuntar Imagen</span>
+                      </button>
+
+                      <Button
+                        onClick={handlePublishPost}
+                        className="rounded-xl text-sm px-4 h-9 shadow-sm transition-all"
+                        style={{ backgroundColor: primaryColor }}
+                        disabled={!newPostContent.trim() && !selectedImage}
+                      >
+                        <Send className="mr-2 h-4 w-4" />
+                        Publicar
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* ========================================================================= */}
+              {/* FEED DE PUBLICACIONES CON SOPORTE DE IMÁGENES                             */}
+              {/* ========================================================================= */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between px-1">
+                  <h3 className="text-base font-bold text-slate-900">Tus Publicaciones</h3>
+                  <span className="text-xs font-semibold bg-slate-200 text-slate-600 px-2 py-0.5 rounded-md">
+                    {posts.length}
+                  </span>
+                </div>
+
+                {posts.map((post) => (
+                  <div key={post.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:shadow-md">
+                    <div className="flex items-center justify-between">
+                      <div className="flex gap-3 items-center">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 border border-blue-100">
+                          <User className="h-5 w-5 text-blue-600" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-bold text-slate-900">{post.author}</h4>
+                          <p className="text-xs text-slate-400">{post.role}</p>
+                        </div>
+                      </div>
+                      <span className="text-xs text-slate-400">{post.date}</span>
+                    </div>
+
+                    {post.content && (
+                      <p className="mt-4 text-sm text-slate-600 whitespace-pre-wrap leading-relaxed">
+                        {post.content}
+                      </p>
+                    )}
+
+                    {/* Renderizado condicional de la imagen del post */}
+                    {post.image && (
+                      <div className="mt-4 overflow-hidden rounded-xl border border-slate-150 bg-slate-50 max-h-96 flex items-center justify-center">
+                        <img src={post.image} alt="Contenido del post" className="w-full object-cover max-h-96" />
+                      </div>
+                    )}
+
+                    <div className="mt-4 pt-3 border-t border-slate-100 flex items-center gap-6 text-slate-400">
+                      <button className="flex items-center gap-1.5 text-xs font-medium hover:text-red-500 transition">
+                        <Heart className="h-4 w-4" />
+                        {post.likes}
+                      </button>
+                      <button className="flex items-center gap-1.5 text-xs font-medium hover:text-blue-500 transition">
+                        <MessageCircle className="h-4 w-4" />
+                        {post.comments}
+                      </button>
+                      <button className="flex items-center gap-1.5 text-xs font-medium hover:text-slate-600 transition ml-auto">
+                        <Share2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+            </div>
+
+            {/* ========================================================================= */}
+            {/* COLUMNA DERECHA: FORMULARIO DE EDICIÓN                                    */}
+            {/* ========================================================================= */}
+            <div className="lg:col-span-1">
+              <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm sticky top-24">
                 <div
                   className="px-6 py-5 text-white"
                   style={{
                     background: `linear-gradient(135deg, ${darkBlue}, ${primaryColor})`,
                   }}
                 >
-                  <h2 className="text-2xl font-bold">Información del perfil</h2>
-                  <p className="mt-1 text-sm text-white/75">
-                    Modifica los datos visibles de tu perfil académico.
-                  </p>
+                  <h2 className="text-xl font-bold">Información del perfil</h2>
+                  <p className="mt-1 text-xs text-white/75">Modifica los datos de tu perfil académico.</p>
                 </div>
 
-                <div className="p-6">
-                  <div className="mb-8 flex items-center gap-5 rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                    <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm">
-                      <User className="h-12 w-12 text-slate-400" />
+                <div className="p-5">
+                  <div className="mb-6 flex flex-col items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-center">
+                    <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm">
+                      <User className="h-10 w-10 text-slate-400" />
                     </div>
-
                     <div>
-                      <h3 className="text-lg font-bold text-slate-900">
-                        María López Retamales
-                      </h3>
-
-                      <p className="mt-1 text-sm text-slate-500">
-                        Alumna · Universidad de La Serena
-                      </p>
-
-                      <Button variant="outline" className="mt-4 rounded-xl">
-                        Cambiar foto
-                      </Button>
+                      <h3 className="text-base font-bold text-slate-900">María López Retamales</h3>
+                      <Button variant="outline" size="sm" className="mt-2 rounded-xl text-xs">Cambiar foto</Button>
                     </div>
                   </div>
 
@@ -142,75 +435,57 @@ export default function EditProfile() {
                       <GraduationCap className="h-4 w-4 text-slate-400" />
                       Carrera
                     </label>
-
                     <Select value={career} onValueChange={setCareer}>
-                      <SelectTrigger className="h-11 w-full rounded-xl border-slate-200">
+                      <SelectTrigger className="h-11 w-full rounded-xl border-slate-200 text-sm">
                         <SelectValue placeholder="Selecciona una carrera" />
                       </SelectTrigger>
-
                       <SelectContent>
                         {careers.map((careerOption) => (
-                          <SelectItem key={careerOption} value={careerOption}>
-                            {careerOption}
-                          </SelectItem>
+                          <SelectItem key={careerOption} value={careerOption}>{careerOption}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
 
-                  <div className="mb-6">
+                  <div className="mb-5">
                     <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
                       <FileText className="h-4 w-4 text-slate-400" />
                       Descripción
                     </label>
-
                     <textarea
                       className="
-                        min-h-[130px] w-full resize-none rounded-xl
-                        border border-slate-200 bg-white p-4
+                        min-h-[85px] w-full resize-none rounded-xl
+                        border border-slate-200 bg-white p-3
                         text-sm text-slate-700 outline-none
                         transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100
                       "
-                      rows={4}
+                      rows={3}
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                     />
                   </div>
 
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                    <div className="mb-4 flex items-center justify-between">
-                      <div>
-                        <h3 className="flex items-center gap-2 text-lg font-bold text-slate-900">
-                          <Sparkles className="h-5 w-5 text-blue-500" />
-                          Intereses
-                        </h3>
-
-                        <p className="mt-1 text-sm text-slate-500">
-                          Agrega temas para mejorar tus conexiones académicas.
-                        </p>
-                      </div>
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <div className="mb-3">
+                      <h3 className="flex items-center gap-2 text-base font-bold text-slate-900">
+                        <Sparkles className="h-4 w-4 text-blue-500" />
+                        Intereses
+                      </h3>
+                      <p className="text-xs text-slate-500">Agrega temas para mejorar tus recomendaciones.</p>
                     </div>
 
-                    <div className="mb-4 flex flex-wrap gap-2">
+                    <div className="mb-3 flex flex-wrap gap-1.5">
                       {interests.map((interest, index) => (
                         <div
                           key={index}
-                          className="
-                            flex items-center gap-2 rounded-full
-                            border border-blue-100 bg-white px-4 py-2
-                            text-sm font-medium text-slate-700 shadow-sm
-                          "
+                          className="flex items-center gap-1.5 rounded-full border border-blue-100 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 shadow-sm"
                         >
-                          <span>{interest}</span>
-
+                          <span className="truncate max-w-[120px]">{interest}</span>
                           <button
                             onClick={() => handleRemoveInterest(index)}
-                            className="
-                              rounded-full p-1 text-slate-400
-                              transition hover:bg-red-50 hover:text-red-500
-                            "
+                            className="rounded-full p-0.5 text-slate-400 transition hover:bg-red-50 hover:text-red-500"
                           >
-                            <X size={14} />
+                            <X size={12} />
                           </button>
                         </div>
                       ))}
@@ -221,26 +496,22 @@ export default function EditProfile() {
                         placeholder="Nuevo interés"
                         value={newInterest}
                         onChange={(e) => setNewInterest(e.target.value)}
-                        className="h-11 rounded-xl border-slate-200 bg-white"
+                        className="h-10 rounded-xl border-slate-200 bg-white text-sm"
                       />
-
                       <Button
                         onClick={handleAddInterest}
-                        className="h-11 rounded-xl px-4"
+                        className="h-10 rounded-xl px-3 shrink-0"
                         style={{ backgroundColor: primaryColor }}
                       >
-                        <Plus size={16} />
+                        <Plus size={14} />
                       </Button>
                     </div>
                   </div>
 
-                  <div className="mt-8 flex justify-end gap-3">
-                    <Button variant="outline" className="rounded-xl">
-                      Cancelar
-                    </Button>
-
+                  <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-end">
+                    <Button variant="outline" className="w-full rounded-xl order-2 sm:order-1 sm:w-auto text-sm">Cancelar</Button>
                     <Button
-                      className="rounded-xl"
+                      className="w-full rounded-xl order-1 sm:order-2 sm:w-auto text-sm"
                       style={{ backgroundColor: primaryColor }}
                     >
                       <Save className="mr-2 h-4 w-4" />
@@ -251,63 +522,6 @@ export default function EditProfile() {
               </div>
             </div>
 
-            <div className="lg:col-span-1">
-              <div className="sticky top-20 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                <div
-                  className="px-6 py-5 text-white"
-                  style={{
-                    background: `linear-gradient(135deg, ${darkBlue}, ${primaryColor})`,
-                  }}
-                >
-                  <div className="flex items-center gap-2">
-                    <Eye className="h-5 w-5" />
-                    <h3 className="text-xl font-bold">Vista previa</h3>
-                  </div>
-                </div>
-
-                <div className="p-6">
-                  <div className="flex justify-center">
-                    <div className="flex h-28 w-28 items-center justify-center rounded-2xl border-4 border-white bg-slate-100 shadow-md">
-                      <User className="h-16 w-16 text-slate-400" />
-                    </div>
-                  </div>
-
-                  <div className="mt-5 text-center">
-                    <h4 className="text-lg font-bold text-slate-900">
-                      María López Retamales
-                    </h4>
-
-                    <p className="mt-1 text-sm text-slate-500">{career}</p>
-                  </div>
-
-                  <div className="mt-6 rounded-xl bg-slate-50 p-4">
-                    <p className="text-sm leading-relaxed text-slate-600">
-                      {description}
-                    </p>
-                  </div>
-
-                  <div className="mt-5">
-                    <h5 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-700">
-                      Intereses
-                    </h5>
-
-                    <div className="flex flex-wrap gap-2">
-                      {interests.map((interest, index) => (
-                        <span
-                          key={index}
-                          className="
-                            rounded-full bg-blue-50 px-3 py-1.5
-                            text-xs font-semibold text-blue-700
-                          "
-                        >
-                          {interest}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>

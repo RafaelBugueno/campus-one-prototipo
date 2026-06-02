@@ -8,7 +8,7 @@ import { ChatWidget } from '../components/ChatWidget';
 import {
   User,
   GraduationCap,
-  Calendar,
+  Calendar as CalendarIcon,
   BadgeCheck,
   MessageCircle,
   Pencil,
@@ -39,13 +39,20 @@ interface Profile {
   availability?: string[];
 }
 
+interface SelectionState {
+  day: string;
+  hour: string;
+}
+
 export default function ProfileView() {
   const { id } = useParams();
   const navigate = useNavigate();
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [openChat, setOpenChat] = useState(false);
-  const [selectedHour, setSelectedHour] = useState<string | null>(null);
+  
+  // Estado para manejar la selección de Día y Hora simultáneamente
+  const [selectedSlot, setSelectedSlot] = useState<SelectionState | null>(null);
 
   const currentUser: Profile = {
     id: '1',
@@ -71,7 +78,6 @@ export default function ProfileView() {
       description:
         'Mentor en desarrollo backend y arquitectura de software. Experiencia en proyectos de gran escala.',
       interests: ['Backend', 'Microservicios', 'DevOps', 'Arquitectura de Software'],
-      availability: ['10:00', '11:00', '15:00'],
     },
     '21.456.789-0': {
       id: '3',
@@ -96,7 +102,6 @@ export default function ProfileView() {
       description:
         'Experto en DevOps y arquitectura de microservicios. Actualmente trabajando en startups tecnológicas.',
       interests: ['DevOps', 'Microservicios', 'Arquitectura de Software', 'Docker', 'Kubernetes'],
-      availability: ['14:00', '16:00', '17:00'],
     },
   };
 
@@ -114,8 +119,16 @@ export default function ProfileView() {
 
   const isOwner = currentUser.rut === profile.rut;
 
-  const allHours = ['09:00', '10:00', '11:00', '12:00', '15:00', '16:00'];
-  const occupied = ['10:00'];
+  // Configuración de la estructura de la tabla de horarios
+  const daysOfWeek = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
+  const hoursOfDay = ['09:00', '10:00', '11:00', '12:00', '15:00', '16:00', '17:00'];
+
+  // Simulación de bloques ya ocupados/reservados (Día-Hora)
+  const occupiedSlots = [
+    'Lunes-10:00',
+    'Miércoles-15:00',
+    'Viernes-11:00'
+  ];
 
   useEffect(() => {
     const handleSidebarState = () => {
@@ -182,7 +195,7 @@ export default function ProfileView() {
                   </div>
 
                   <div className="pb-1">
-                    <h2 className="text-3xl font-bold text-slate-900">
+                    <h2 className="text-3xl font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.4)]">
                       {profile.name}
                     </h2>
 
@@ -261,7 +274,7 @@ export default function ProfileView() {
                     </div>
 
                     <div className="flex gap-3">
-                      <Calendar className="mt-0.5 h-4 w-4 text-slate-400" />
+                      <CalendarIcon className="mt-0.5 h-4 w-4 text-slate-400" />
                       <div>
                         <p className="text-xs text-slate-400">Año ingreso</p>
                         <p className="text-sm font-medium text-slate-700">
@@ -319,17 +332,18 @@ export default function ProfileView() {
               </div>
             )}
 
+            {/* VISTA DEL PROPIO DUEÑO (MENTOR/EXPOSITOR) - GESTIÓN DE AGENDA */}
             {isOwner &&
               (profile.type === 'Mentor' || profile.type === 'Expositor') && (
                 <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                   <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div>
                       <h3 className="text-xl font-bold text-slate-900">
-                        Gestión de Agenda
+                        Gestión de Agenda Semanal
                       </h3>
 
                       <p className="mt-1 text-sm text-slate-500">
-                        Administra disponibilidad, solicitudes y horas agendadas.
+                        Visualiza la distribución de tus bloques y solicitudes de la semana.
                       </p>
                     </div>
 
@@ -338,19 +352,48 @@ export default function ProfileView() {
                       className="rounded-xl"
                       style={{ backgroundColor: primaryColor }}
                     >
-                      Ir a Agenda
+                      Configurar Agenda Completa
                     </Button>
                   </div>
 
-                  <div className="mt-5 grid grid-cols-2 gap-2 md:grid-cols-6">
-                    {allHours.map((hour) => (
-                      <div
-                        key={hour}
-                        className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-center text-sm font-semibold text-slate-600"
-                      >
-                        {hour}
-                      </div>
-                    ))}
+                  {/* Tabla de visualización para el dueño */}
+                  <div className="mt-6 overflow-x-auto rounded-xl border border-slate-200">
+                    <table className="w-full border-collapse text-left text-sm">
+                      <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
+                        <tr>
+                          <th className="border-b border-slate-200 p-4 font-bold text-slate-700">Horario</th>
+                          {daysOfWeek.map((day) => (
+                            <th key={day} className="border-b border-slate-200 p-4 font-bold text-slate-700">{day}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200 bg-white">
+                        {hoursOfDay.map((hour) => (
+                          <tr key={hour} className="hover:bg-slate-50/50">
+                            <td className="whitespace-nowrap p-4 font-semibold text-slate-500 bg-slate-50/30">
+                              {hour}
+                            </td>
+                            {daysOfWeek.map((day) => {
+                              const slotKey = `${day}-${hour}`;
+                              const isOccupied = occupiedSlots.includes(slotKey);
+                              return (
+                                <td key={day} className="p-2">
+                                  <div
+                                    className={`rounded-lg p-2 text-center text-xs font-medium border ${
+                                      isOccupied
+                                        ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                        : 'bg-slate-50 text-slate-400 border-dashed border-slate-200'
+                                    }`}
+                                  >
+                                    {isOccupied ? 'Ocupado' : 'Libre'}
+                                  </div>
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
 
                   <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4">
@@ -360,7 +403,7 @@ export default function ProfileView() {
 
                     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                       <span className="text-sm font-medium text-slate-700">
-                        Juan Pérez
+                        Juan Pérez <span className="text-xs text-slate-400 font-normal">(Martes a las 11:00)</span>
                       </span>
 
                       <div className="flex gap-2">
@@ -383,6 +426,7 @@ export default function ProfileView() {
                 </div>
               )}
 
+            {/* VISTA DE TERCEROS (ESTUDIANTES) - TABLA DE AGENDAMIENTO ACTIVO */}
             {!isOwner &&
               (profile.type === 'Mentor' || profile.type === 'Expositor') && (
                 <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -394,46 +438,85 @@ export default function ProfileView() {
                   >
                     <h3 className="text-xl font-bold">Agendar Mentoría</h3>
                     <p className="mt-1 text-sm text-white/75">
-                      Selecciona una hora disponible para enviar una solicitud.
+                      Selecciona un bloque disponible en la matriz semanal para enviar tu solicitud.
                     </p>
                   </div>
 
                   <div className="p-6">
-                    <div className="grid grid-cols-2 gap-3 md:grid-cols-6">
-                      {allHours.map((hour) => {
-                        const isOccupied = occupied.includes(hour);
-                        const isSelected = selectedHour === hour;
+                    {/* Contenedor con scroll horizontal para pantallas pequeñas */}
+                    <div className="overflow-x-auto rounded-xl border border-slate-200">
+                      <table className="w-full border-collapse text-left text-sm min-w-[650px]">
+                        <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
+                          <tr>
+                            <th className="border-b border-slate-200 p-4 font-bold text-slate-700 w-24">Horario</th>
+                            {daysOfWeek.map((day) => (
+                              <th key={day} className="border-b border-slate-200 p-4 font-bold text-slate-700 text-center">{day}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-200 bg-white">
+                          {hoursOfDay.map((hour) => (
+                            <tr key={hour} className="hover:bg-slate-50/50">
+                              <td className="whitespace-nowrap p-4 font-semibold text-slate-500 bg-slate-50/30 flex items-center gap-1.5">
+                                <Clock className="h-3.5 w-3.5 text-slate-400" />
+                                {hour}
+                              </td>
+                              {daysOfWeek.map((day) => {
+                                const slotKey = `${day}-${hour}`;
+                                const isOccupied = occupiedSlots.includes(slotKey);
+                                const isSelected = selectedSlot?.day === day && selectedSlot?.hour === hour;
 
-                        return (
-                          <button
-                            key={hour}
-                            disabled={isOccupied}
-                            onClick={() => setSelectedHour(hour)}
-                            className={`
-                              rounded-xl border p-3 text-center text-sm font-semibold transition
-                              ${
-                                isOccupied
-                                  ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
-                                  : isSelected
-                                  ? 'border-blue-500 bg-blue-50 text-blue-700'
-                                  : 'border-slate-200 bg-white text-slate-600 hover:bg-blue-50'
-                              }
-                            `}
-                          >
-                            <Clock className="mx-auto mb-1 h-4 w-4" />
-                            {hour}
-                          </button>
-                        );
-                      })}
+                                return (
+                                  <td key={day} className="p-2">
+                                    <button
+                                      disabled={isOccupied}
+                                      onClick={() => setSelectedSlot({ day, hour })}
+                                      className={`
+                                        w-full rounded-xl border p-2.5 text-center text-xs font-semibold transition flex flex-col items-center justify-center gap-0.5
+                                        ${
+                                          isOccupied
+                                            ? 'cursor-not-allowed border-slate-100 bg-slate-100 text-slate-400'
+                                            : isSelected
+                                            ? 'border-blue-500 bg-blue-50 text-blue-700 ring-2 ring-blue-500/20'
+                                            : 'border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:bg-blue-50/40'
+                                        }
+                                      `}
+                                    >
+                                      <span className={isOccupied ? 'text-slate-400' : isSelected ? 'text-blue-700' : 'text-slate-500'}>
+                                        {isOccupied ? 'No Disponible' : isSelected ? 'Seleccionado' : 'Disponible'}
+                                      </span>
+                                    </button>
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
 
-                    <Button
-                      className="mt-5 rounded-xl"
-                      style={{ backgroundColor: primaryColor }}
-                      disabled={!selectedHour}
-                    >
-                      Agendar
-                    </Button>
+                    <div className="mt-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                      <div className="text-sm">
+                        {selectedSlot ? (
+                          <p className="text-slate-700 font-medium">
+                            Bloque seleccionado:{' '}
+                            <span className="text-blue-600 font-bold">
+                              {selectedSlot.day} a las {selectedSlot.hour} hrs
+                            </span>
+                          </p>
+                        ) : (
+                          <p className="text-slate-500">Por favor, selecciona un espacio disponible en la tabla.</p>
+                        )}
+                      </div>
+
+                      <Button
+                        className="rounded-xl px-6 self-end sm:self-auto"
+                        style={{ backgroundColor: primaryColor }}
+                        disabled={!selectedSlot}
+                      >
+                        Confirmar y Solicitar
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}
