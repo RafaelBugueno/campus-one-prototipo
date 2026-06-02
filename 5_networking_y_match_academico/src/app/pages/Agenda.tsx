@@ -91,7 +91,7 @@ export default function Agenda() {
 
   const [availability, setAvailability] = useState<
     Record<string, Record<string, boolean>>
-  >({
+  >(({
     Lunes: {
       '09:00': true,
       '10:00': true,
@@ -176,7 +176,7 @@ export default function Agenda() {
       '17:00': false,
       '18:00': false,
     },
-  });
+  }));
 
   useEffect(() => {
     const handleSidebarState = () => {
@@ -195,7 +195,7 @@ export default function Agenda() {
       ...prev,
       [day]: {
         ...prev[day],
-        [hour]: !prev[day][hour],
+        [hour]: !prev[day]?.[hour],
       },
     }));
   };
@@ -286,7 +286,7 @@ export default function Agenda() {
                     </h3>
 
                     <p className="text-sm text-slate-500">
-                      Desarrollo Web · Tecnología
+                      Development Web · Tecnología
                     </p>
                   </div>
 
@@ -415,9 +415,7 @@ export default function Agenda() {
                     background: `linear-gradient(135deg, ${darkBlue}, ${primaryColor})`,
                   }}
                 >
-                  <h3 className="text-xl font-bold">
-                    Solicitudes de Mentoría
-                  </h3>
+                  <h3 className="text-xl font-bold">Solicitudes de Mentoría</h3>
                   <p className="mt-1 text-sm text-white/75">
                     Acepta o rechaza nuevas solicitudes.
                   </p>
@@ -517,6 +515,7 @@ export default function Agenda() {
                             const meeting = scheduled.find(
                               (s) => s.day === day && s.hour === hour
                             );
+                            const isAvailable = availability[day]?.[hour] ?? false;
 
                             return (
                               <td
@@ -529,7 +528,7 @@ export default function Agenda() {
                                   ${
                                     meeting
                                       ? 'bg-blue-50'
-                                      : availability[day]?.[hour]
+                                      : isAvailable
                                       ? 'cursor-pointer bg-green-50 hover:bg-green-100'
                                       : 'cursor-pointer bg-red-50 hover:bg-red-100'
                                   }
@@ -557,12 +556,12 @@ export default function Agenda() {
                                       Cancelar
                                     </Button>
                                   </div>
-                                ) : availability[day]?.[hour] ? (
-                                  <span className="font-bold text-green-600">
+                                ) : isAvailable ? (
+                                  <span className="font-bold text-green-600 select-none">
                                     Disponible
                                   </span>
                                 ) : (
-                                  <span className="font-bold text-red-500">
+                                  <span className="font-bold text-red-500 select-none">
                                     No disponible
                                   </span>
                                 )}
