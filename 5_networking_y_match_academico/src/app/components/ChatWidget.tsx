@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MessageCircle, X, Send, Minimize2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -19,36 +19,87 @@ interface Message {
   read?: boolean;
 }
 
-export function ChatWidget() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [selectedContact, setSelectedContact] = useState<ChatContact | null>(null);
+interface ChatWidgetProps {
+  initialOpen?: boolean;
+  initialContactId?: string;
+}
+
+export function ChatWidget({
+  initialOpen = false,
+  initialContactId,
+}: ChatWidgetProps) {
+  const [isOpen, setIsOpen] = useState(initialOpen);
+  
+  useEffect(() => {
+    setIsOpen(initialOpen);
+  }, [initialOpen]);
+
+  const [selectedContact, setSelectedContact] =
+    useState<ChatContact | null>(null);
+
   const [message, setMessage] = useState('');
+
   const [messages, setMessages] = useState<Message[]>([
-    { id: '1', text: 'Hola, ¿cómo estás?', sender: 'other', timestamp: '10:30', read: true },
-    { id: '2', text: 'Hola! Todo bien, ¿y tú?', sender: 'me', timestamp: '10:32', read: true },
-    { id: '3', text: 'Genial, te quería preguntar sobre el proyecto', sender: 'other', timestamp: '10:33', read: false }
+    {
+      id: '1',
+      text: 'Hola, ¿cómo estás?',
+      sender: 'other',
+      timestamp: '10:30',
+      read: true,
+    },
+    {
+      id: '2',
+      text: 'Hola! Todo bien, ¿y tú?',
+      sender: 'me',
+      timestamp: '10:32',
+      read: true,
+    },
+    {
+      id: '3',
+      text: 'Genial, te quería preguntar sobre el proyecto',
+      sender: 'other',
+      timestamp: '10:33',
+      read: false,
+    },
   ]);
 
   const [contacts] = useState<ChatContact[]>([
     {
-      id: '1',
+      id: '19.234.567-8',
       name: 'Carlos Ramírez González',
       lastMessage: 'Genial, te quería preguntar sobre el proyecto',
-      unread: 2
+      unread: 2,
     },
     {
-      id: '2',
+      id: '21.456.789-0',
       name: 'Ana Fernández Silva',
       lastMessage: 'Nos vemos mañana entonces',
-      unread: 0
+      unread: 0,
     },
     {
-      id: '3',
+      id: '18.765.432-1',
       name: 'Roberto Díaz Morales',
       lastMessage: 'Perfecto, gracias!',
-      unread: 1
-    }
+      unread: 1,
+    },
   ]);
+
+  useEffect(() => {
+    if (initialOpen) {
+      setIsOpen(true);
+    }
+
+    if (initialContactId) {
+      const contact = contacts.find(
+        (c) => c.id === initialContactId
+      );
+
+      if (contact) {
+        setSelectedContact(contact);
+        setIsOpen(true);
+      }
+    }
+  }, [initialOpen, initialContactId, contacts]);
 
   const handleSendMessage = () => {
     if (message.trim() && selectedContact) {
@@ -58,15 +109,21 @@ export function ChatWidget() {
           id: Date.now().toString(),
           text: message,
           sender: 'me',
-          timestamp: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
-          read: false
-        }
+          timestamp: new Date().toLocaleTimeString('es-ES', {
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
+          read: false,
+        },
       ]);
       setMessage('');
     }
   };
 
-  const totalUnread = contacts.reduce((sum, contact) => sum + (contact.unread || 0), 0);
+  const totalUnread = contacts.reduce(
+    (sum, contact) => sum + (contact.unread || 0),
+    0
+  );
 
   return (
     <>
@@ -81,6 +138,7 @@ export function ChatWidget() {
         title="Mensajes"
       >
         <MessageCircle className="h-5 w-5" />
+
         {totalUnread > 0 && (
           <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
             {totalUnread}
@@ -91,19 +149,23 @@ export function ChatWidget() {
       {/* VENTANA DE CHAT */}
       {isOpen && (
         <>
-          {/* Overlay para móvil - respeta sidebar */}
           <div
             className="fixed inset-0 left-12 md:left-0 bg-black/50 z-[100] md:hidden"
             onClick={() => setIsOpen(false)}
           />
 
-          {/* Ventana de chat - respeta sidebar en móvil */}
           <div className="fixed top-0 bottom-0 left-12 right-0 md:inset-auto md:bottom-4 md:right-4 md:left-auto md:top-auto md:w-96 md:h-[500px] md:rounded-xl h-[100dvh] bg-white md:border-2 border-gray-300 shadow-2xl z-[101] flex flex-col overflow-hidden">
             {/* HEADER */}
-            <div className="text-white p-4 flex justify-between items-center flex-shrink-0" style={{ backgroundColor: 'rgb(0,50,130)' }}>
+            <div
+              className="text-white p-4 flex justify-between items-center flex-shrink-0"
+              style={{ backgroundColor: 'rgb(0,50,130)' }}
+            >
               <h3 className="font-semibold truncate">
-                {selectedContact ? selectedContact.name : 'Mensajes'}
+                {selectedContact
+                  ? selectedContact.name
+                  : 'Mensajes'}
               </h3>
+
               <div className="flex gap-2 flex-shrink-0">
                 {selectedContact && (
                   <button
@@ -113,6 +175,7 @@ export function ChatWidget() {
                     <Minimize2 className="h-5 w-5" />
                   </button>
                 )}
+
                 <button
                   onClick={() => setIsOpen(false)}
                   className="hover:bg-white/20 p-1.5 rounded transition"
@@ -122,11 +185,9 @@ export function ChatWidget() {
               </div>
             </div>
 
-            {/* CONTENIDO */}
             {!selectedContact ? (
-              /* LISTA DE CONTACTOS */
               <div className="flex-1 overflow-y-auto overscroll-contain">
-                {contacts.map(contact => (
+                {contacts.map((contact) => (
                   <div
                     key={contact.id}
                     onClick={() => setSelectedContact(contact)}
@@ -138,12 +199,19 @@ export function ChatWidget() {
                           <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0">
                             {contact.name.charAt(0)}
                           </div>
+
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm truncate">{contact.name}</p>
-                            <p className="text-xs text-gray-500 truncate">{contact.lastMessage}</p>
+                            <p className="font-medium text-sm truncate">
+                              {contact.name}
+                            </p>
+
+                            <p className="text-xs text-gray-500 truncate">
+                              {contact.lastMessage}
+                            </p>
                           </div>
                         </div>
                       </div>
+
                       {contact.unread && contact.unread > 0 && (
                         <span className="bg-red-500 text-white text-xs rounded-full h-5 min-w-[20px] px-1.5 flex items-center justify-center flex-shrink-0">
                           {contact.unread}
@@ -154,14 +222,16 @@ export function ChatWidget() {
                 ))}
               </div>
             ) : (
-              /* VENTANA DE CHAT */
               <>
-                {/* MENSAJES */}
                 <div className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-3 bg-gray-50">
-                  {messages.map(msg => (
+                  {messages.map((msg) => (
                     <div
                       key={msg.id}
-                      className={`flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'}`}
+                      className={`flex ${
+                        msg.sender === 'me'
+                          ? 'justify-end'
+                          : 'justify-start'
+                      }`}
                     >
                       <div
                         className={`max-w-[75%] px-4 py-2 rounded-lg ${
@@ -170,15 +240,21 @@ export function ChatWidget() {
                             : 'bg-white border border-gray-200'
                         }`}
                       >
-                        <p className="text-sm break-words">{msg.text}</p>
+                        <p className="text-sm break-words">
+                          {msg.text}
+                        </p>
+
                         <div className="flex items-center gap-2 mt-1">
                           <p
                             className={`text-xs ${
-                              msg.sender === 'me' ? 'text-blue-100' : 'text-gray-400'
+                              msg.sender === 'me'
+                                ? 'text-blue-100'
+                                : 'text-gray-400'
                             }`}
                           >
                             {msg.timestamp}
                           </p>
+
                           {msg.sender === 'me' && (
                             <span className="text-xs">
                               {msg.read ? '✓✓' : '✓'}
@@ -190,16 +266,20 @@ export function ChatWidget() {
                   ))}
                 </div>
 
-                {/* INPUT */}
                 <div className="p-4 border-t border-gray-200 bg-white flex-shrink-0 safe-bottom">
                   <div className="flex gap-2">
                     <Input
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
+                      onKeyPress={(e) =>
+                        e.key === 'Enter' &&
+                        !e.shiftKey &&
+                        handleSendMessage()
+                      }
                       placeholder="Escribe un mensaje..."
                       className="flex-1"
                     />
+
                     <Button
                       onClick={handleSendMessage}
                       className="bg-blue-600 hover:bg-blue-700 flex-shrink-0"
