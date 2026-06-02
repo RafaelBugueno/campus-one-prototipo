@@ -20,6 +20,7 @@ import {
   Settings,
   Check,
   X,
+  Loader2,
 } from 'lucide-react';
 
 const primaryColor = 'rgb(0,123,255)';
@@ -51,8 +52,14 @@ export default function ProfileView() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [openChat, setOpenChat] = useState(false);
   
+  // Estado para el botón de Conectar ('idle' | 'pending')
+  const [connectStatus, setConnectStatus] = useState<'idle' | 'pending'>('idle');
+
   // Estado para manejar la selección de Día y Hora simultáneamente
   const [selectedSlot, setSelectedSlot] = useState<SelectionState | null>(null);
+  
+  // Estado para almacenar los bloques que pasaron a estar "Pendientes de confirmación"
+  const [pendingSlots, setPendingSlots] = useState<string[]>([]);
 
   const currentUser: Profile = {
     id: '1',
@@ -152,6 +159,15 @@ export default function ProfileView() {
 
   const RoleIcon = roleIcon;
 
+  // Manejador para enviar la solicitud de agendamiento
+  const handleRequestSlot = () => {
+    if (!selectedSlot) return;
+    
+    const slotKey = `${selectedSlot.day}-${selectedSlot.hour}`;
+    setPendingSlots([...pendingSlots, slotKey]);
+    setSelectedSlot(null); // Resetea la selección activa de la interfaz
+  };
+
   return (
     <div className="min-h-screen bg-slate-50">
       <Sidebar />
@@ -220,12 +236,28 @@ export default function ProfileView() {
                 <div className="flex flex-wrap gap-3">
                   {!isOwner && (
                     <Button
-                      onClick={() => setOpenChat(true)}
-                      className="rounded-xl"
-                      style={{ backgroundColor: primaryColor }}
+                      onClick={() => {
+                        setConnectStatus('pending');
+                        setOpenChat(true);
+                      }}
+                      className="rounded-xl transition-all"
+                      style={{ 
+                        backgroundColor: connectStatus === 'pending' ? 'rgb(241,245,249)' : primaryColor,
+                        color: connectStatus === 'pending' ? 'rgb(100,116,139)' : 'white',
+                        border: connectStatus === 'pending' ? '1px solid rgb(226,232,240)' : 'none'
+                      }}
                     >
-                      <MessageCircle className="mr-2 h-4 w-4" />
-                      Conectar
+                      {connectStatus === 'pending' ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin text-slate-400" />
+                          Pendiente
+                        </>
+                      ) : (
+                        <>
+                          <MessageCircle className="mr-2 h-4 w-4" />
+                          Conectar
+                        </>
+                      )}
                     </Button>
                   )}
 
@@ -443,7 +475,6 @@ export default function ProfileView() {
                   </div>
 
                   <div className="p-6">
-                    {/* Contenedor con scroll horizontal para pantallas pequeñas */}
                     <div className="overflow-x-auto rounded-xl border border-slate-200">
                       <table className="w-full border-collapse text-left text-sm min-w-[650px]">
                         <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
@@ -464,26 +495,35 @@ export default function ProfileView() {
                               {daysOfWeek.map((day) => {
                                 const slotKey = `${day}-${hour}`;
                                 const isOccupied = occupiedSlots.includes(slotKey);
+                                const isPending = pendingSlots.includes(slotKey);
                                 const isSelected = selectedSlot?.day === day && selectedSlot?.hour === hour;
 
                                 return (
                                   <td key={day} className="p-2">
                                     <button
-                                      disabled={isOccupied}
+                                      disabled={isOccupied || isPending}
                                       onClick={() => setSelectedSlot({ day, hour })}
                                       className={`
                                         w-full rounded-xl border p-2.5 text-center text-xs font-semibold transition flex flex-col items-center justify-center gap-0.5
                                         ${
                                           isOccupied
                                             ? 'cursor-not-allowed border-slate-100 bg-slate-100 text-slate-400'
+                                            : isPending
+                                            ? 'cursor-not-allowed border-amber-200 bg-amber-50 text-amber-700'
                                             : isSelected
                                             ? 'border-blue-500 bg-blue-50 text-blue-700 ring-2 ring-blue-500/20'
                                             : 'border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:bg-blue-50/40'
                                         }
                                       `}
                                     >
-                                      <span className={isOccupied ? 'text-slate-400' : isSelected ? 'text-blue-700' : 'text-slate-500'}>
-                                        {isOccupied ? 'No Disponible' : isSelected ? 'Seleccionado' : 'Disponible'}
+                                      <span>
+                                        {isOccupied 
+                                          ? 'No Disponible' 
+                                          : isPending 
+                                          ? 'Pendiente de confirmación' 
+                                          : isSelected 
+                                          ? 'Seleccionado' 
+                                          : 'Disponible'}
                                       </span>
                                     </button>
                                   </td>
@@ -510,6 +550,7 @@ export default function ProfileView() {
                       </div>
 
                       <Button
+                        onClick={handleRequestSlot}
                         className="rounded-xl px-6 self-end sm:self-auto"
                         style={{ backgroundColor: primaryColor }}
                         disabled={!selectedSlot}
