@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { ChatWidget } from '../components/ChatWidget';
-import { useNavigate } from 'react-router'; // Importación para la navegación interna de React Router
+import { useNavigate } from 'react-router-dom'; // Importación para la navegación interna de React Router
 import { Navbar } from '../components/Navbar';
 import { Sidebar } from '../components/Sidebar';
 import { FloatingWidgets } from '../components/FloatingWidgets';
