@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
+import { ChatWidget } from '../components/ChatWidget';
+import { useNavigate } from 'react-router'; // Importación para la navegación interna de React Router
 import { Navbar } from '../components/Navbar';
 import { Sidebar } from '../components/Sidebar';
 import { FloatingWidgets } from '../components/FloatingWidgets';
@@ -18,7 +20,9 @@ import {
   Heart,
   MessageCircle,
   Share2,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Users,
+  Search
 } from 'lucide-react';
 import {
   Select,
@@ -37,15 +41,26 @@ interface Post {
   author: string;
   role: string;
   content: string;
-  image?: string; // URL o Base64 de la imagen adjunta
+  image?: string;
   date: string;
   likes: number;
   comments: number;
 }
 
+interface Connection {
+  id: string; // Cambiado a string para que coincida con los RUTs identificadores de ProfileView
+  name: string;
+  role: string;
+  avatarUrl?: string;
+}
+
 export default function EditProfile() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate(); // Inicialización del hook de navegación
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatUserId, setChatUserId] = useState<string>();
 
   // Estados del perfil
   const [career, setCareer] = useState('Ingeniería en Computación');
@@ -57,6 +72,17 @@ export default function EditProfile() {
     'Frontend',
   ]);
   const [newInterest, setNewInterest] = useState('');
+
+  // Estados para conexiones
+  const [showConnections, setShowConnections] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  // Datos simulados sincronizados con las llaves (RUTs) de profilesDatabase en ProfileView.tsx
+  const [connections] = useState<Connection[]>([
+    { id: '19.234.567-8', name: 'Carlos Ramírez González', role: 'Mentor • Ingeniería en Computación' },
+    { id: '21.456.789-0', name: 'Ana Fernández Silva', role: 'Estudiante • Ingeniería Civil Informática' },
+    { id: '18.765.432-1', name: 'Roberto Díaz Morales', role: 'Expositor • Ingeniería en Software' },
+  ]);
 
   // Estados para publicaciones e imágenes multimedia
   const [newPostContent, setNewPostContent] = useState('');
@@ -90,8 +116,17 @@ export default function EditProfile() {
 
     window.addEventListener('toggle-sidebar-state', handleSidebarState);
 
+    // Cerrar el globo de conexiones al hacer click fuera de él
+    const handleClickOutside = (event: MouseEvent) => {
+      if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) {
+        setShowConnections(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+
     return () => {
       window.removeEventListener('toggle-sidebar-state', handleSidebarState);
+      document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
 
@@ -106,7 +141,6 @@ export default function EditProfile() {
     setInterests(interests.filter((_, i) => i !== index));
   };
 
-  // Manejador para cargar la imagen localmente
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -140,6 +174,24 @@ export default function EditProfile() {
     setPosts([newPost, ...posts]);
     setNewPostContent('');
     handleRemoveSelectedImage();
+  };
+
+  // Filtrar conexiones según la búsqueda
+  const filteredConnections = connections.filter(conn =>
+    conn.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    conn.role.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Manejar redirección al componente ProfileView mediante React Router
+  const handleNavigateToProfile = (userId: string) => {
+    navigate(`/profile/${userId}`); 
+  };
+
+  // Redirecciona a ProfileView pasando un estado interno para detonar la apertura automática del ChatWidget
+  const handleOpenChat = (e: React.MouseEvent, userId: string) => {
+    e.stopPropagation(); // Evita el efecto de propagación del onClick del contenedor padre
+    setChatUserId(userId);
+    setChatOpen(true);
   };
 
   return (
@@ -200,7 +252,7 @@ export default function EditProfile() {
                           20.968.604-k
                         </p>
 
-                        <div className="mt-3 flex flex-wrap gap-2">
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
                           <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
                             <GraduationCap className="h-3.5 w-3.5" />
                             Estudiante
@@ -209,6 +261,77 @@ export default function EditProfile() {
                             <BadgeCheck className="h-3.5 w-3.5" />
                             3° Nivel
                           </span>
+
+                          {/* ========================================================================= */}
+                          {/* CONTENEDOR ANCLA PARA EL GLOBO DE CONEXIONES                              */}
+                          {/* ========================================================================= */}
+                          <div className="relative inline-block" ref={popoverRef}>
+                            <button 
+                              onClick={() => setShowConnections(!showConnections)}
+                              className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition shadow-sm"
+                            >
+                              <Users className="h-3.5 w-3.5" />
+                              <span>{connections.length} Conexiones</span>
+                            </button>
+
+                            {/* Globo de texto (Popover) */}
+                            {showConnections && (
+                              <div className="absolute left-0 mt-2 z-50 w-80 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl animate-in fade-in slide-in-from-top-2 duration-200">
+                                <div className="absolute -top-1.5 left-6 h-3 w-3 rotate-45 border-t border-l border-slate-200 bg-white" />
+                                
+                                <h3 className="text-sm font-bold text-slate-800 mb-2.5">Mis Conexiones</h3>
+                                
+                                {/* Buscador dentro del globo */}
+                                <div className="relative mb-3">
+                                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                                  <input 
+                                    type="text" 
+                                    placeholder="Buscar por nombre o rol..." 
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-4 text-xs outline-none transition focus:border-blue-400 focus:bg-white"
+                                  />
+                                </div>
+
+                                {/* Listado de conexiones */}
+                                <div className="max-h-60 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                                  {filteredConnections.length === 0 ? (
+                                    <p className="text-center text-xs text-slate-400 py-4">No se encontraron conexiones.</p>
+                                  ) : (
+                                    filteredConnections.map((conn) => (
+                                      <div 
+                                        key={conn.id}
+                                        onClick={() => handleNavigateToProfile(conn.id)}
+                                        className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 transition cursor-pointer group"
+                                      >
+                                        <div className="flex items-center gap-2.5 min-w-0">
+                                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 border border-slate-200">
+                                            <User className="h-4 w-4 text-slate-400" />
+                                          </div>
+                                          <div className="min-w-0">
+                                            <h4 className="text-xs font-bold text-slate-800 group-hover:text-blue-600 transition truncate">
+                                              {conn.name}
+                                            </h4>
+                                            <p className="text-[10px] text-slate-400 truncate">{conn.role}</p>
+                                          </div>
+                                        </div>
+
+                                        {/* Icono circular de Chat */}
+                                        <button 
+                                          onClick={(e) => handleOpenChat(e, conn.id)}
+                                          className="p-1.5 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition shrink-0"
+                                          title={`Conversar con ${conn.name}`}
+                                        >
+                                          <MessageCircle className="h-3.5 w-3.5" />
+                                        </button>
+                                      </div>
+                                    ))
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
                         </div>
                       </div>
                     </div>
@@ -278,9 +401,7 @@ export default function EditProfile() {
                 </div>
               </div>
 
-              {/* ========================================================================= */}
-              {/* RECUADRO DE PUBLICAR CON CARGA DE IMAGEN                                  */}
-              {/* ========================================================================= */}
+              {/* Recuadro de publicar con carga de imagen */}
               <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <h3 className="mb-3 text-base font-bold text-slate-900">Crear Publicación</h3>
                 <div className="flex gap-3 items-start">
@@ -300,7 +421,6 @@ export default function EditProfile() {
                       onChange={(e) => setNewPostContent(e.target.value)}
                     />
 
-                    {/* Previsualización de la imagen cargada */}
                     {selectedImage && (
                       <div className="relative inline-block mt-2 rounded-xl overflow-hidden border border-slate-200 max-h-60 bg-slate-50">
                         <img src={selectedImage} alt="Adjunto" className="object-cover max-h-60 w-auto rounded-xl" />
@@ -313,7 +433,6 @@ export default function EditProfile() {
                       </div>
                     )}
 
-                    {/* Input file oculto */}
                     <input
                       type="file"
                       accept="image/*"
@@ -323,7 +442,6 @@ export default function EditProfile() {
                     />
 
                     <div className="flex justify-between items-center pt-1">
-                      {/* Botón multimedia */}
                       <button
                         onClick={() => fileInputRef.current?.click()}
                         className="flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-blue-600 transition p-2 rounded-lg hover:bg-slate-50"
@@ -346,9 +464,7 @@ export default function EditProfile() {
                 </div>
               </div>
 
-              {/* ========================================================================= */}
-              {/* FEED DE PUBLICACIONES CON SOPORTE DE IMÁGENES                             */}
-              {/* ========================================================================= */}
+              {/* Feed de publicaciones */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between px-1">
                   <h3 className="text-base font-bold text-slate-900">Tus Publicaciones</h3>
@@ -378,7 +494,6 @@ export default function EditProfile() {
                       </p>
                     )}
 
-                    {/* Renderizado condicional de la imagen del post */}
                     {post.image && (
                       <div className="mt-4 overflow-hidden rounded-xl border border-slate-150 bg-slate-50 max-h-96 flex items-center justify-center">
                         <img src={post.image} alt="Contenido del post" className="w-full object-cover max-h-96" />
@@ -525,6 +640,11 @@ export default function EditProfile() {
           </div>
         </div>
       </div>
+
+      <ChatWidget
+        initialOpen={chatOpen}
+        initialContactId={chatUserId}
+      />
     </div>
   );
 }
