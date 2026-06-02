@@ -51,7 +51,7 @@ export function RatingRouter() {
   }
 
   return (
-    <div className="fixed inset-0 bg-background z-[2000]">
+    <div className="h-screen w-screen flex flex-col bg-background z-[2000]">
       <RatingApp />
     </div>
   );

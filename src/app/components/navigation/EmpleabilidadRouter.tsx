@@ -63,7 +63,7 @@ export function EmpleabilidadRouter() {
   };
 
   return (
-    <div className="fixed inset-0 overflow-auto bg-white">
+    <div className="h-screen w-screen flex flex-col bg-white">
       <PublicationsList initialUserType={getUserTypeParam()} />
     </div>
   );
