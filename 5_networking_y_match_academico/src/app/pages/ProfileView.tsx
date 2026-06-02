@@ -182,7 +182,8 @@ export default function ProfileView() {
                   </div>
 
                   <div className="pb-1">
-                    <h2 className="text-3xl font-bold text-slate-900">
+                    {/* Cambio aquí: El texto del nombre ahora es de color blanco */}
+                    <h2 className="text-3xl font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.4)]">
                       {profile.name}
                     </h2>
 
