@@ -1,4 +1,4 @@
-import { RouterProvider } from 'react-router';
+import { RouterProvider } from 'react-router-dom'; // 👈 Cambiado desde 'react-router'
 import { router } from './routes';
 
 export default function App() {
