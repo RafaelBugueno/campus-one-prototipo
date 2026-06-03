@@ -1,4 +1,6 @@
-import { createBrowserRouter } from 'react-router';
+import { createBrowserRouter } from 'react-router-dom'; // 👈 Forzamos el uso de -dom
+import React from 'react';
+
 import TechHub from './pages/TechHub';
 import ProfileView from './pages/ProfileView';
 import EditProfile from './pages/EditProfile';
@@ -9,36 +11,26 @@ import OrganizerPanel from './pages/OrganizerPanel';
 export const router = createBrowserRouter([
   {
     path: '/',
-    Component: TechHub,
+    element: React.createElement(TechHub),
   },
-
-  // 👤 PERFIL (propio o ajeno)
   {
     path: '/profile/:id',
-    Component: ProfileView,
+    element: React.createElement(ProfileView),
   },
-
-  // ✏️ EDITAR PERFIL
   {
     path: '/edit-profile',
-    Component: EditProfile,
+    element: React.createElement(EditProfile), // 👈 Tu página mapeada bajo el mismo contexto
   },
-
-  // 📅 AGENDA (mentores / expositores)
   {
     path: '/agenda',
-    Component: Agenda,
+    element: React.createElement(Agenda),
   },
-
-  // 👑 ADMIN PANEL
   {
     path: '/admin',
-    Component: AdminPanel,
+    element: React.createElement(AdminPanel),
   },
-
-  // 🧠 ORGANIZADOR
   {
     path: '/organizer',
-    Component: OrganizerPanel,
+    element: React.createElement(OrganizerPanel),
   },
 ]);
