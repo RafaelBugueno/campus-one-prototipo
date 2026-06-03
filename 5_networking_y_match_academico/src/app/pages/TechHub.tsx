@@ -301,7 +301,7 @@ export default function TechHub() {
                   <Button
                     className="mt-5 w-full rounded-xl"
                     style={{ backgroundColor: primaryColor }}
-                    onClick={() => navigate('/edit-profile')}
+                    onClick={() => navigate('/networking-y-match-academico/edit-profile')}
                   >
                     Editar Perfil
                   </Button>
@@ -460,7 +460,7 @@ export default function TechHub() {
                               user={profile}
                               onAccept={handleAcceptMatch}
                               onReject={handleRejectMatch}
-                              onClick={() => navigate(`/profile/${profile.rut}`)}
+                              onClick={() => navigate(`/networking-y-match-academico/profile/${profile.rut}`)}
                             />
                           ))
                         )}
