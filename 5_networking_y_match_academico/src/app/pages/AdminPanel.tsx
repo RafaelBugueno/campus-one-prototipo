@@ -137,13 +137,13 @@ export default function AdminPanel() {
 
   const goToEditProfile = (user: UserData) => {
     if (user.role === 'Estudiante') {
-      navigate('/edit-profile');
+      navigate('/networking-y-match-academico/edit-profile');
     } else if (user.role === 'Mentor' || user.role === 'Expositor') {
-      navigate('/agenda');
+      navigate('/networking-y-match-academico/agenda');
     } else if (user.role === 'Organizador') {
-      navigate('/organizer-panel');
+      navigate('/networking-y-match-academico/organizer-panel');
     } else if (user.role === 'Administrador') {
-      navigate('/admin-panel');
+      navigate('/networking-y-match-academico/admin-panel');
     }
   };
 
