@@ -1,4 +1,4 @@
-import { useParams, useNavigate, useLocation } from 'react-router'; // Se añade useLocation para interceptar estados de navegación
+import { useParams, useNavigate, useLocation } from 'react-router-dom'; // Se añade useLocation para interceptar estados de navegación
 import { useState, useEffect } from 'react';
 import { Navbar } from '../components/Navbar';
 import { Sidebar } from '../components/Sidebar';
