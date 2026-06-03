@@ -184,7 +184,7 @@ export default function EditProfile() {
 
   // Manejar redirección al componente ProfileView mediante React Router
   const handleNavigateToProfile = (userId: string) => {
-    navigate(`/profile/${userId}`); 
+    navigate(`/networking-y-match-academico/profile/${userId}`); 
   };
 
   // Redirecciona a ProfileView pasando un estado interno para detonar la apertura automática del ChatWidget
