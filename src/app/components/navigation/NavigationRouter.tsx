@@ -1,9 +1,8 @@
-import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import VisitorView from './VisitorView';
-import StudentView from './StudentView';
-import AdminView from './AdminView';
+import VisitorView from '../../../../1_navegacion_inteligente/src/app/components/VisitorView';
+import StudentView from '../../../../1_navegacion_inteligente/src/app/components/StudentView';
+import AdminView from '../../../../1_navegacion_inteligente/src/app/components/AdminView';
 
 export function NavigationRouter() {
   const { userType, isAuthenticated } = useAuth();

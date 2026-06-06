@@ -18,7 +18,7 @@ export default function App() {
   return (
     <div className="size-full">
       {currentView === 'home' && <HomeScreen onSelectRole={handleSelectRole} />}
-      {currentView === 'visitor' && <VisitorView />}
+      {currentView === 'visitor' && <VisitorView onGoHome={handleGoHome} />}
       {currentView === 'student' && <StudentView onGoHome={handleGoHome} />}
       {currentView === 'admin' && <AdminView onGoHome={handleGoHome} />}
     </div>
