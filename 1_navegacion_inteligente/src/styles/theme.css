@@ -8,8 +8,8 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: #030213;
-  --primary-foreground: oklch(1 0 0);
+  --primary: rgb(0, 123, 255);
+  --primary-foreground: #ffffff;
   --secondary: oklch(0.95 0.0058 264.53);
   --secondary-foreground: #030213;
   --muted: #ececf0;
@@ -18,9 +18,9 @@
   --accent-foreground: #030213;
   --destructive: #d4183d;
   --destructive-foreground: #ffffff;
-  --border: rgba(0, 0, 0, 0.1);
+  --border: rgb(226, 232, 240);
   --input: transparent;
-  --input-background: #f3f3f5;
+  --input-background: rgb(248, 250, 252);
   --switch-background: #cbced4;
   --font-weight-medium: 500;
   --font-weight-normal: 400;
@@ -30,15 +30,18 @@
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: #030213;
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
+  --radius: 0.5rem;
+  --sidebar: rgb(0, 50, 130);
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #ffffff;
+  --sidebar-primary-foreground: rgb(0, 50, 130);
+  --sidebar-accent: rgba(255, 255, 255, 0.1);
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgba(255, 255, 255, 0.1);
   --sidebar-ring: oklch(0.708 0 0);
+  --uls-blue: rgb(0, 50, 130);
+  --uls-red: #C8102E;
+  --uls-primary: rgb(0, 123, 255);
 }
 
 .dark {
@@ -178,4 +181,30 @@
     font-weight: var(--font-weight-normal);
     line-height: 1.5;
   }
+}
+
+@keyframes event-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(207, 20, 43, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(207, 20, 43, 0);
+  }
+}
+
+.custom-event-icon {
+  background: transparent !important;
+  border: none !important;
+  display: block !important;
+  width: 20px !important;
+  height: 20px !important;  overflow: visible !important;}
+
+.event-marker {
+  display: block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid;
+  box-sizing: border-box;
+  animation: event-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }

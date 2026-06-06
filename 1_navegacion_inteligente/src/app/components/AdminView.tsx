@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Search, List, Filter, X, MapPin, LayoutGrid } from 'lucide-react';
+import { Search, List, Filter, X, MapPin, LayoutGrid, Calendar, AlertTriangle } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { CustomSidebar } from './CustomSidebar';
@@ -14,7 +14,41 @@ interface POI {
   position: [number, number];
   description?: string;
   externalLinks?: string[];
+  hasActiveEvent?: boolean;
+  eventCategory?: string;
+  eventStartDate?: string;
+  eventEndDate?: string;
 }
+
+const generateExternalLinks = (poiName: string, category: string): string[] => {
+  const links: string[] = [];
+  
+  // Enlaces académicos para salas
+  if (category === 'Salas') {
+    links.push(`https://academico.userena.cl/horarios/${poiName.toLowerCase().replace(/\s+/g, '-')}`);
+    links.push(`https://academico.userena.cl/programas/${poiName.toLowerCase().replace(/\s+/g, '-')}`);
+  }
+  
+  // Enlaces de laboratorios
+  if (category === 'Laboratorios') {
+    links.push(`https://infraestructura.userena.cl/equipamiento/${poiName.toLowerCase().replace(/\s+/g, '-')}`);
+    links.push(`https://infraestructura.userena.cl/reservas/${poiName.toLowerCase().replace(/\s+/g, '-')}`);
+  }
+  
+  // Enlaces de servicios
+  if (category === 'Servicios') {
+    links.push(`https://servicios.userena.cl/contacto`);
+    links.push(`https://servicios.userena.cl/horarios-atencion`);
+  }
+  
+  // Enlaces de oficinas
+  if (category === 'Oficinas') {
+    links.push(`https://oficinas.userena.cl/directorio`);
+    links.push(`https://oficinas.userena.cl/contacto/${poiName.toLowerCase().replace(/\s+/g, '-')}`);
+  }
+  
+  return links;
+};
 
 const generatePOIsForCampus = (
   campusName: string,
@@ -34,20 +68,39 @@ const generatePOIsForCampus = (
     { name: 'Sala de Estudio', category: 'Servicios', description: 'Espacio de estudio' }
   ];
 
+  const eventCategories = ['Conferencia', 'Taller', 'Seminario', 'Reunión'];
+
   for (let floor = 1; floor <= 3; floor++) {
     for (let i = 0; i < 5; i++) {
       const poiType = poiTypes[i % poiTypes.length];
       const offsetLat = ((i % 3) - 1) * spacing;
       const offsetLng = (Math.floor(i / 3) - 0.5) * spacing;
+      const poiName = `${poiType.name} ${String.fromCharCode(65 + i)} - Piso ${floor}`;
+      
+      // Algunos POIs tienen eventos activos (aproximadamente 20%)
+      const hasEvent = Math.random() < 0.2;
+      const eventCat = hasEvent ? eventCategories[Math.floor(Math.random() * eventCategories.length)] : undefined;
+      
+      // Generar fechas de evento
+      const today = new Date();
+      const futureDate = new Date(today);
+      futureDate.setDate(today.getDate() + Math.floor(Math.random() * 60)); // Evento en los próximos 60 días
+      const endDate = new Date(futureDate);
+      endDate.setDate(futureDate.getDate() + Math.floor(Math.random() * 5) + 1); // Duración 1-5 días
 
       pois.push({
         id: `${id}`,
-        name: `${poiType.name} ${String.fromCharCode(65 + i)} - Piso ${floor}`,
+        name: poiName,
         category: poiType.category,
         campus: campusName,
         floor: floor,
         position: [centerLat + offsetLat, centerLng + offsetLng],
-        description: `${poiType.description} en el piso ${floor}`
+        description: `${poiType.description} en el piso ${floor}`,
+        externalLinks: generateExternalLinks(poiName, poiType.category),
+        hasActiveEvent: hasEvent,
+        eventCategory: eventCat,
+        eventStartDate: hasEvent ? futureDate.toISOString().split('T')[0] : undefined,
+        eventEndDate: hasEvent ? endDate.toISOString().split('T')[0] : undefined
       });
       id++;
     }
@@ -57,10 +110,10 @@ const generatePOIsForCampus = (
 };
 
 const CAMPUS_COORDS: { [key: string]: [number, number] } = {
-  'Ignacio Domeyko': [-29.90896, -71.24613],
-  'Isabel Bongard': [-29.9027, -71.2519],
-  'Andrés Bello': [-29.913, -71.242],
-  'Mecánica': [-29.9095, -71.2470]
+  'Ignacio Domeyko': [-29.908548, -71.246099],
+  'Isabel Bongard': [-29.911262, -71.245408],
+  'Andrés Bello': [-29.913318, -71.242221],
+  'Mecánica': [-29.909625, -71.246190]
 };
 
 const MOCK_POIS: POI[] = [
@@ -72,6 +125,7 @@ const MOCK_POIS: POI[] = [
 
 const CAMPUSES = ['Ignacio Domeyko', 'Isabel Bongard', 'Andrés Bello', 'Mecánica'];
 const CATEGORIES = ['Salas', 'Laboratorios', 'Servicios', 'Oficinas', 'Baños'];
+const EVENT_CATEGORIES = ['Conferencia', 'Taller', 'Seminario', 'Reunión'];
 
 const CATEGORY_COLORS: { [key: string]: string } = {
   'Salas': '#3B82F6',
@@ -107,21 +161,22 @@ export default function AdminView({ onGoHome }: AdminViewProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const rectanglesRef = useRef<L.Rectangle[]>([]);
+  const highlightedMarkerRef = useRef<L.CircleMarker | null>(null);
 
   const [selectedCampus, setSelectedCampus] = useState('Ignacio Domeyko');
   const [selectedFloor, setSelectedFloor] = useState(1);
   const [showCampusSelector, setShowCampusSelector] = useState(false);
   const [showPOIPanel, setShowPOIPanel] = useState(false);
   const [showManagePanel, setShowManagePanel] = useState(false);
-  const [poiPanelView, setPOIPanelView] = useState<'main' | 'filter' | 'search' | 'list'>('main');
-  const [manageView, setManageView] = useState<'main' | 'create' | 'edit' | 'delete' | 'edit-form' | 'create-form'>('main');
+  const [poiPanelView, setPOIPanelView] = useState<'main' | 'filter' | 'filter-events' | 'search' | 'list'>('main');
+  const [manageView, setManageView] = useState<'main' | 'create' | 'edit' | 'delete' | 'edit-form' | 'create-form' | 'delete-confirm'>('main');
   const [selectedPOI, setSelectedPOI] = useState<POI | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [infoError, setInfoError] = useState(false);
   const [detailError, setDetailError] = useState(false);
   const [mapError, setMapError] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [isDraggingFloor, setIsDraggingFloor] = useState(false);
   const floorSliderRef = useRef<HTMLDivElement>(null);
 
@@ -134,10 +189,18 @@ export default function AdminView({ onGoHome }: AdminViewProps) {
   const [editFloor, setEditFloor] = useState('');
   const [showErrors, setShowErrors] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [successAction, setSuccessAction] = useState<'created' | 'edited' | 'deleted' | ''>('');
   const [coordError, setCoordError] = useState(false);
   const [showExternalLinkPanel, setShowExternalLinkPanel] = useState(false);
   const [selectedModule, setSelectedModule] = useState('');
   const [selectedModuleInfo, setSelectedModuleInfo] = useState('');
+
+  // Event filter state
+  const [showEventFilters, setShowEventFilters] = useState(false);
+  const [selectedEventCategories, setSelectedEventCategories] = useState<string[]>([]);
+  const [selectedEventCampus, setSelectedEventCampus] = useState('');
+  const [eventDateFrom, setEventDateFrom] = useState('');
+  const [eventDateTo, setEventDateTo] = useState('');
 
   const filteredPOIs = MOCK_POIS.filter(
     poi => poi.campus === selectedCampus && poi.floor === selectedFloor
@@ -152,8 +215,54 @@ export default function AdminView({ onGoHome }: AdminViewProps) {
     ? MOCK_POIS.filter(poi => selectedCategories.includes(poi.category) && poi.campus === selectedCampus)
     : MOCK_POIS.filter(poi => poi.campus === selectedCampus);
 
+  // Filtrar eventos activos
+  const filteredEvents = MOCK_POIS.filter(poi => {
+    if (!poi.hasActiveEvent) return false;
+
+    // Filtrar por categoría de evento
+    if (selectedEventCategories.length > 0 && poi.eventCategory) {
+      if (!selectedEventCategories.includes(poi.eventCategory)) return false;
+    }
+
+    // Filtrar por sede
+    if (selectedEventCampus && poi.campus !== selectedEventCampus) return false;
+
+    // Filtrar por rango de fechas
+    if (eventDateFrom || eventDateTo) {
+      const eventStart = poi.eventStartDate ? new Date(poi.eventStartDate) : null;
+      const eventEnd = poi.eventEndDate ? new Date(poi.eventEndDate) : null;
+
+      if (eventDateFrom && eventStart) {
+        const filterFrom = new Date(eventDateFrom);
+        if (eventStart < filterFrom) return false;
+      }
+      
+      if (eventDateTo && eventEnd) {
+        const filterTo = new Date(eventDateTo);
+        if (eventEnd > filterTo) return false;
+      }
+    }
+
+    return true;
+  });
+
+  const poisForMap = (() => {
+    if (showEventFilters) return filteredEvents;
+    const base = MOCK_POIS.filter(poi => poi.campus === selectedCampus && poi.floor === selectedFloor);
+    if (selectedCategories.length > 0) return base.filter(poi => selectedCategories.includes(poi.category));
+    return base;
+  })();
+
   const toggleCategory = (category: string) => {
     setSelectedCategories(prev =>
+      prev.includes(category)
+        ? prev.filter(c => c !== category)
+        : [...prev, category]
+    );
+  };
+
+  const toggleEventCategory = (category: string) => {
+    setSelectedEventCategories(prev =>
       prev.includes(category)
         ? prev.filter(c => c !== category)
         : [...prev, category]
@@ -166,6 +275,7 @@ export default function AdminView({ onGoHome }: AdminViewProps) {
     setDetailError(hasError);
     setSelectedPOI(poi);
     setShowPOIPanel(false);
+    setShowEventFilters(false);
   };
 
   const handleEditPOISelect = () => {
@@ -196,6 +306,62 @@ export default function AdminView({ onGoHome }: AdminViewProps) {
     setShowErrors(false);
   };
 
+  const highlightPOIOnMap = (poiId: string, action: 'created' | 'edited' | 'deleted') => {
+    const poi = MOCK_POIS.find(p => p.id === poiId);
+    if (!poi || !mapInstanceRef.current) return;
+
+    // Navegar al campus y piso del POI
+    setSelectedCampus(poi.campus);
+    setSelectedFloor(poi.floor);
+
+    setTimeout(() => {
+      if (!mapInstanceRef.current) return;
+
+      // Centrar el mapa en el POI
+      mapInstanceRef.current.setView(poi.position, 18);
+
+      // Crear marcador destacado
+      if (highlightedMarkerRef.current) {
+        highlightedMarkerRef.current.remove();
+      }
+
+      const color = action === 'deleted' ? '#C8102E' : '#10B981';
+      
+      highlightedMarkerRef.current = L.circleMarker(poi.position, {
+        radius: 15,
+        color: color,
+        fillColor: color,
+        fillOpacity: 0.5,
+        weight: 3
+      }).addTo(mapInstanceRef.current);
+
+      // Animar el marcador
+      let size = 15;
+      let growing = false;
+      const animationInterval = setInterval(() => {
+        if (highlightedMarkerRef.current) {
+          if (growing) {
+            size += 0.5;
+            if (size >= 20) growing = false;
+          } else {
+            size -= 0.5;
+            if (size <= 15) growing = true;
+          }
+          highlightedMarkerRef.current.setRadius(size);
+        }
+      }, 50);
+
+      // Remover el marcador destacado después de 3 segundos
+      setTimeout(() => {
+        clearInterval(animationInterval);
+        if (highlightedMarkerRef.current) {
+          highlightedMarkerRef.current.remove();
+          highlightedMarkerRef.current = null;
+        }
+      }, 3000);
+    }, 100);
+  };
+
   const handleSavePOI = () => {
     if (!editName || !editCategory || !editCoordinates || !editCampus || !editFloor) {
       setShowErrors(true);
@@ -213,30 +379,61 @@ export default function AdminView({ onGoHome }: AdminViewProps) {
       return;
     }
 
+    const action = manageView === 'edit-form' ? 'edited' : 'created';
+    setSuccessAction(action);
     setShowSuccess(true);
+
+    // Simular creación/edición y resaltar en el mapa
+    const poiId = manageView === 'edit-form' ? selectedPOIForEdit : '999'; // ID simulado
+    
     setTimeout(() => {
-      setShowSuccess(false);
-      setShowManagePanel(false);
-      setManageView('main');
-      setCoordError(false);
-      setShowErrors(false);
-    }, 2000);
+      highlightPOIOnMap(poiId, action);
+      
+      setTimeout(() => {
+        setShowSuccess(false);
+        setShowManagePanel(false);
+        setManageView('main');
+        setCoordError(false);
+        setShowErrors(false);
+        setSuccessAction('');
+      }, 1500);
+    }, 1000);
   };
 
-  const handleDeletePOI = () => {
+  const handleDeletePOIConfirm = () => {
     if (!selectedPOIForEdit) {
       setShowErrors(true);
       return;
     }
 
+    // Verificar si el POI tiene evento activo
+    const poi = MOCK_POIS.find(p => p.id === selectedPOIForEdit);
+    if (poi?.hasActiveEvent) {
+      setManageView('delete-confirm');
+      return;
+    }
+
+    // Si no tiene evento activo, proceder con la eliminación
+    handleDeletePOI();
+  };
+
+  const handleDeletePOI = () => {
+    const poiId = selectedPOIForEdit;
+    setSuccessAction('deleted');
     setShowSuccess(true);
+
     setTimeout(() => {
-      setShowSuccess(false);
-      setShowManagePanel(false);
-      setManageView('main');
-      setSelectedPOIForEdit('');
-      setShowErrors(false);
-    }, 2000);
+      highlightPOIOnMap(poiId, 'deleted');
+      
+      setTimeout(() => {
+        setShowSuccess(false);
+        setShowManagePanel(false);
+        setManageView('main');
+        setSelectedPOIForEdit('');
+        setShowErrors(false);
+        setSuccessAction('');
+      }, 1500);
+    }, 1000);
   };
 
   const handleExternalLinkConfirm = () => {
@@ -340,28 +537,38 @@ export default function AdminView({ onGoHome }: AdminViewProps) {
     rectanglesRef.current.forEach(rect => rect.remove());
     rectanglesRef.current = [];
 
-    filteredPOIs.forEach(poi => {
-      const size = 0.00008;
-      const bounds: L.LatLngBoundsExpression = [
-        [poi.position[0] - size, poi.position[1] - size],
-        [poi.position[0] + size, poi.position[1] + size]
-      ];
-
+    poisForMap.forEach(poi => {
       const color = CATEGORY_COLORS[poi.category] || '#6B7280';
+      const hasEvent = poi.hasActiveEvent;
 
-      const rectangle = L.rectangle(bounds, {
-        color: color,
-        fillColor: color,
-        fillOpacity: 0.6,
-        weight: 2
-      })
-        .addTo(mapInstanceRef.current!)
-        .bindPopup(`<div style="color: ${color};"><strong>${poi.name}</strong><br/>${poi.category}</div>`)
-        .on('click', () => handlePOIClick(poi));
+      let marker;
+      if (hasEvent) {
+        const icon = L.divIcon({
+          className: 'custom-event-icon',
+          html: `<div class="event-marker" style="background-color: ${color}; border: 2px solid ${color}; border-radius: 50%; width: 20px; height: 20px; box-sizing: border-box; animation: event-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;"></div>`,
+          iconSize: [20, 20],
+          iconAnchor: [10, 10]
+        });
+        marker = L.marker(poi.position, { icon })
+          .addTo(mapInstanceRef.current!)
+          .bindPopup(`<div style="color: ${color};"><strong>${poi.name}</strong><br/>${poi.category}<br/><span style="color: #C8102E;">📅 Evento Activo</span></div>`)
+          .on('click', () => handlePOIClick(poi));
+      } else {
+        marker = L.circleMarker(poi.position, {
+          radius: 8,
+          color: color,
+          fillColor: color,
+          fillOpacity: 0.8,
+          weight: 2
+        })
+          .addTo(mapInstanceRef.current!)
+          .bindPopup(`<div style="color: ${color};"><strong>${poi.name}</strong><br/>${poi.category}</div>`)
+          .on('click', () => handlePOIClick(poi));
+      }
 
-      rectanglesRef.current.push(rectangle);
+      rectanglesRef.current.push(marker as any);
     });
-  }, [filteredPOIs]);
+  }, [poisForMap]);
 
   const getFloorPosition = () => {
     const percentage = (3 - selectedFloor) / 2;
@@ -373,18 +580,22 @@ export default function AdminView({ onGoHome }: AdminViewProps) {
   };
 
   return (
-    <div className="size-full relative flex">
+    <div className="size-full relative">
+      {/* Overlay oscuro */}
+      {!sidebarCollapsed && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-20 z-[1550]"
+          onClick={() => setSidebarCollapsed(true)}
+        />
+      )}
+
       <CustomSidebar
         collapsed={sidebarCollapsed}
         onCollapsedChange={setSidebarCollapsed}
         onLogoClick={onGoHome}
       />
 
-      <div
-        className={`flex-1 transition-all duration-300 ${
-          sidebarCollapsed ? 'ml-12' : 'ml-64'
-        }`}
-      >
+      <div className="size-full">
         <CustomNavbar
           collapsed={sidebarCollapsed}
           onToggleSidebar={handleToggleSidebar}
@@ -396,12 +607,13 @@ export default function AdminView({ onGoHome }: AdminViewProps) {
             setSelectedCampus(campus);
             setShowCampusSelector(false);
           }}
+          showNotifications={true}
         />
 
         <div className="relative h-screen pt-16">
 
       <div className="absolute top-1/4 right-6 h-1/2 z-[1000] flex flex-col items-center">
-        <span className="text-[#003082] text-xs mb-2">Piso</span>
+        <span className="text-[rgb(0,50,130)] text-xs mb-2">Piso</span>
 
         <div
           ref={floorSliderRef}
@@ -413,13 +625,13 @@ export default function AdminView({ onGoHome }: AdminViewProps) {
         >
           <div className="relative w-1 h-full bg-gray-300 rounded-full">
             <div
-              className="absolute bottom-0 w-full bg-[#003082] rounded-full transition-all duration-150"
-              style={{ height: `${(selectedFloor / 3) * 100}%` }}
+              className="absolute bottom-0 w-full bg-[rgb(0,50,130)] rounded-full transition-all duration-150"
+              style={{ height: `${100 - getFloorPosition()}%` }}
             />
 
             {isDraggingFloor && (
               <div
-                className="absolute w-10 h-10 bg-[#CF142B] rounded-full border-4 border-white shadow-lg flex items-center justify-center text-white"
+                className="absolute w-10 h-10 bg-[#C8102E] rounded-full border-4 border-white shadow-lg flex items-center justify-center text-white"
                 style={{
                   top: `${getFloorPosition()}%`,
                   left: '50%',
@@ -440,7 +652,7 @@ export default function AdminView({ onGoHome }: AdminViewProps) {
               setShowPOIPanel(true);
               setPOIPanelView('main');
             }}
-            className="bg-[#CF142B] text-white w-16 h-16 rounded-full shadow-lg hover:bg-[#a50f22] transition-colors flex items-center justify-center"
+            className="bg-[#C8102E] text-white w-16 h-16 rounded-full shadow-lg hover:bg-[#a50f22] transition-colors flex items-center justify-center"
             title="Panel de POI"
           >
             <MapPin className="w-7 h-7" />
@@ -451,7 +663,7 @@ export default function AdminView({ onGoHome }: AdminViewProps) {
               setShowManagePanel(true);
               setManageView('main');
             }}
-            className="bg-[#CF142B] text-white w-16 h-16 rounded-full shadow-lg hover:bg-[#a50f22] transition-colors flex items-center justify-center"
+            className="bg-[#C8102E] text-white w-16 h-16 rounded-full shadow-lg hover:bg-[#a50f22] transition-colors flex items-center justify-center"
             title="Gestión de POI"
           >
             <LayoutGrid className="w-7 h-7" />
@@ -459,13 +671,13 @@ export default function AdminView({ onGoHome }: AdminViewProps) {
         </div>
       )}
 
-      {/* POI Panel (same as Student/Visitor) */}
+      {/* POI Panel */}
       {showPOIPanel && (
-        <div className="absolute bottom-8 right-4 left-4 z-[1000] bg-white rounded-lg shadow-xl border-2 border-[#003082] max-w-md mx-auto">
+        <div className="absolute bottom-8 right-4 left-4 z-[1000] bg-white rounded-lg shadow-xl border-2 border-slate-200 max-w-md mx-auto">
           {poiPanelView === 'main' && (
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl text-[#003082]">Panel de POI</h3>
+                <h3 className="text-xl text-[rgb(0,50,130)]">Panel de POI</h3>
                 <button onClick={() => setShowPOIPanel(false)}>
                   <X className="w-5 h-5 text-gray-500" />
                 </button>
@@ -475,19 +687,32 @@ export default function AdminView({ onGoHome }: AdminViewProps) {
                   onClick={() => setPOIPanelView('filter')}
                   className="flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-lg hover:bg-gray-100 text-left"
                 >
-                  <Filter className="w-5 h-5 text-[#003082]" />
+                  <Filter className="w-5 h-5 text-[rgb(0,50,130)]" />
                   <div>
-                    <div className="text-[#003082]">Filtro de POI</div>
+                    <div className="text-[rgb(0,50,130)]">Filtro de POI</div>
                     <div className="text-sm text-gray-500">por categoría</div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => {
+                    setPOIPanelView('filter-events');
+                    setShowEventFilters(true);
+                  }}
+                  className="flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-lg hover:bg-gray-100 text-left"
+                >
+                  <Calendar className="w-5 h-5 text-[rgb(0,50,130)]" />
+                  <div>
+                    <div className="text-[rgb(0,50,130)]">Filtro de eventos</div>
+                    <div className="text-sm text-gray-500">por categoría, fechas y sede</div>
                   </div>
                 </button>
                 <button
                   onClick={() => setPOIPanelView('search')}
                   className="flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-lg hover:bg-gray-100 text-left"
                 >
-                  <Search className="w-5 h-5 text-[#003082]" />
+                  <Search className="w-5 h-5 text-[rgb(0,50,130)]" />
                   <div>
-                    <div className="text-[#003082]">Buscador de POI</div>
+                    <div className="text-[rgb(0,50,130)]">Buscador de POI</div>
                     <div className="text-sm text-gray-500">con sugerencias en tiempo real</div>
                   </div>
                 </button>
@@ -495,8 +720,8 @@ export default function AdminView({ onGoHome }: AdminViewProps) {
                   onClick={() => setPOIPanelView('list')}
                   className="flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-lg hover:bg-gray-100 text-left"
                 >
-                  <List className="w-5 h-5 text-[#003082]" />
-                  <div className="text-[#003082]">Listado de POI</div>
+                  <List className="w-5 h-5 text-[rgb(0,50,130)]" />
+                  <div className="text-[rgb(0,50,130)]">Listado de POI</div>
                 </button>
               </div>
             </div>
@@ -505,7 +730,7 @@ export default function AdminView({ onGoHome }: AdminViewProps) {
           {poiPanelView === 'filter' && (
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl text-[#003082]">Filtrar por Categoría</h3>
+                <h3 className="text-xl text-[rgb(0,50,130)]">Filtro de POI</h3>
                 <button onClick={() => setPOIPanelView('main')}>
                   <X className="w-5 h-5 text-gray-500" />
                 </button>
@@ -520,24 +745,24 @@ export default function AdminView({ onGoHome }: AdminViewProps) {
                       type="checkbox"
                       checked={selectedCategories.includes(category)}
                       onChange={() => toggleCategory(category)}
-                      className="w-4 h-4 text-[#CF142B] rounded focus:ring-[#CF142B]"
+                      className="w-4 h-4 text-[#C8102E] rounded focus:ring-blue-500"
                     />
                     <div className="flex items-center gap-1.5 flex-1 min-w-0">
                       <div
                         className="w-3 h-3 rounded flex-shrink-0"
                         style={{ backgroundColor: CATEGORY_COLORS[category] }}
                       />
-                      <span className="text-[#003082] text-sm truncate">{category}</span>
+                      <span className="text-[rgb(0,50,130)] text-sm truncate">{category}</span>
                     </div>
                   </label>
                 ))}
               </div>
               <div className="flex gap-2">
                 <button
-                  onClick={() => setPOIPanelView('list')}
-                  className="flex-1 px-4 py-2 bg-[#003082] text-white rounded-lg hover:bg-[#002060]"
+                  onClick={() => setShowPOIPanel(false)}
+                  className="flex-1 px-4 py-2 bg-[rgb(0,50,130)] text-white rounded-lg hover:bg-[#002060]"
                 >
-                  Ver resultados
+                  Aplicar al mapa
                 </button>
                 <button
                   onClick={() => setSelectedCategories([])}
@@ -549,14 +774,139 @@ export default function AdminView({ onGoHome }: AdminViewProps) {
             </div>
           )}
 
-          {poiPanelView === 'search' && (
-            <div className={`fixed top-24 z-[1001] max-w-md ${
-              sidebarCollapsed ? 'left-[calc(48px+1rem)]' : 'left-[calc(256px+1rem)]'
-            } right-4`}>
-              <div className="bg-white rounded-lg shadow-xl border-2 border-[#003082] max-h-[70vh] flex flex-col">
+          {poiPanelView === 'filter-events' && (
+            <div className="fixed inset-x-4 top-16 bottom-0 z-[1001] flex items-center justify-center pointer-events-none">
+              <div className="bg-white rounded-lg shadow-xl border-2 border-slate-200 max-h-[70vh] flex flex-col w-full max-w-md pointer-events-auto">
                 <div className="p-6 border-b border-gray-200">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-xl text-[#003082]">Buscar POI</h3>
+                    <h3 className="text-xl text-[rgb(0,50,130)]">Filtro de eventos</h3>
+                    <button onClick={() => {
+                      setPOIPanelView('main');
+                      setShowEventFilters(false);
+                      setSelectedEventCategories([]);
+                      setSelectedEventCampus('');
+                      setEventDateFrom('');
+                      setEventDateTo('');
+                    }}>
+                      <X className="w-5 h-5 text-gray-500" />
+                    </button>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    {/* Filtro por categoría de evento */}
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-2">Categoría de evento</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {EVENT_CATEGORIES.map(category => (
+                          <label
+                            key={category}
+                            className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedEventCategories.includes(category)}
+                              onChange={() => toggleEventCategory(category)}
+                              className="w-4 h-4 text-[#C8102E] rounded focus:ring-blue-500"
+                            />
+                            <span className="text-[rgb(0,50,130)] text-sm">{category}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Filtro por sede */}
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-2">Sede</label>
+                      <select
+                        value={selectedEventCampus}
+                        onChange={(e) => setSelectedEventCampus(e.target.value)}
+                        className="w-full px-4 py-2 border-2 border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Todas las sedes</option>
+                        {CAMPUSES.map(campus => (
+                          <option key={campus} value={campus}>{campus}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Filtro por rango de fechas */}
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-2">Rango de fechas</label>
+                      <div className="flex gap-2">
+                        <input
+                          type="date"
+                          value={eventDateFrom}
+                          onChange={(e) => setEventDateFrom(e.target.value)}
+                          className="flex-1 px-3 py-2 border-2 border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-0"
+                          placeholder="Desde"
+                        />
+                        <input
+                          type="date"
+                          value={eventDateTo}
+                          onChange={(e) => setEventDateTo(e.target.value)}
+                          className="flex-1 px-3 py-2 border-2 border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-0"
+                          placeholder="Hasta"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-4">
+                  <div className="mb-2 text-sm text-gray-600">
+                    {filteredEvents.length} evento(s) encontrado(s)
+                  </div>
+                  {filteredEvents.map(poi => (
+                    <button
+                      key={poi.id}
+                      onClick={() => handlePOIClick(poi)}
+                      className="w-full px-4 py-3 text-left hover:bg-gray-100 rounded-lg border-b border-gray-200 last:border-b-0"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-3 h-3 rounded"
+                          style={{ backgroundColor: CATEGORY_COLORS[poi.category] }}
+                        />
+                        <span className="text-[rgb(0,50,130)]">{poi.name}</span>
+                      </div>
+                      <div className="text-sm text-gray-500 ml-5">
+                        {poi.eventCategory} - {poi.campus} - Piso {poi.floor}
+                      </div>
+                      <div className="text-xs text-[#C8102E] ml-5">
+                        📅 {poi.eventStartDate} al {poi.eventEndDate}
+                      </div>
+                    </button>
+                  ))}
+                  {filteredEvents.length === 0 && (
+                    <p className="text-gray-500 text-center py-8">
+                      No hay eventos activos que coincidan con los filtros
+                    </p>
+                  )}
+                </div>
+
+                <div className="p-4 border-t border-gray-200">
+                  <button
+                    onClick={() => {
+                      setSelectedEventCategories([]);
+                      setSelectedEventCampus('');
+                      setEventDateFrom('');
+                      setEventDateTo('');
+                    }}
+                    className="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                  >
+                    Limpiar filtros
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {poiPanelView === 'search' && (
+            <div className="fixed inset-x-4 top-16 bottom-0 z-[1001] flex items-center justify-center pointer-events-none">
+              <div className="bg-white rounded-lg shadow-xl border-2 border-slate-200 max-h-[70vh] flex flex-col w-full max-w-md pointer-events-auto">
+                <div className="p-6 border-b border-gray-200">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-xl text-[rgb(0,50,130)]">Buscar POI</h3>
                     <button onClick={() => setPOIPanelView('main')}>
                       <X className="w-5 h-5 text-gray-500" />
                     </button>
@@ -566,7 +916,7 @@ export default function AdminView({ onGoHome }: AdminViewProps) {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Buscar punto de interés..."
-                    className="w-full px-4 py-3 border-2 border-[#003082] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CF142B]"
+                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
                 <div className="flex-1 overflow-y-auto p-4">
@@ -586,7 +936,7 @@ export default function AdminView({ onGoHome }: AdminViewProps) {
                           className="w-3 h-3 rounded"
                           style={{ backgroundColor: CATEGORY_COLORS[poi.category] }}
                         />
-                        <span className="text-[#003082]">{poi.name}</span>
+                        <span className="text-[rgb(0,50,130)]">{poi.name}</span>
                       </div>
                       <div className="text-sm text-gray-500 ml-5">{poi.category} - Piso {poi.floor}</div>
                     </button>
@@ -597,13 +947,11 @@ export default function AdminView({ onGoHome }: AdminViewProps) {
           )}
 
           {poiPanelView === 'list' && (
-            <div className={`fixed top-24 z-[1001] max-w-md ${
-              sidebarCollapsed ? 'left-[calc(48px+1rem)]' : 'left-[calc(256px+1rem)]'
-            } right-4`}>
-              <div className="bg-white rounded-lg shadow-xl border-2 border-[#003082] max-h-[70vh] flex flex-col">
+            <div className="fixed inset-x-4 top-16 bottom-0 z-[1001] flex items-center justify-center pointer-events-none">
+              <div className="bg-white rounded-lg shadow-xl border-2 border-slate-200 max-h-[70vh] flex flex-col w-full max-w-md pointer-events-auto">
                 <div className="p-6 border-b border-gray-200">
                   <div className="flex justify-between items-center">
-                    <h3 className="text-xl text-[#003082]">
+                    <h3 className="text-xl text-[rgb(0,50,130)]">
                       {selectedCategories.length > 0 ? 'POI Filtrados' : 'Todos los POI'}
                     </h3>
                     <button onClick={() => {
@@ -639,7 +987,7 @@ export default function AdminView({ onGoHome }: AdminViewProps) {
                           className="w-3 h-3 rounded"
                           style={{ backgroundColor: CATEGORY_COLORS[poi.category] }}
                         />
-                        <span className="text-[#003082]">{poi.name}</span>
+                        <span className="text-[rgb(0,50,130)]">{poi.name}</span>
                       </div>
                       <div className="text-sm text-gray-500 ml-5">{poi.category} - Piso {poi.floor}</div>
                     </button>
@@ -658,14 +1006,12 @@ export default function AdminView({ onGoHome }: AdminViewProps) {
 
       {/* Management Panel */}
       {showManagePanel && (
-        <div className={`fixed top-24 z-[1001] max-w-md ${
-          sidebarCollapsed ? 'left-[calc(48px+1rem)]' : 'left-[calc(256px+1rem)]'
-        } right-4`}>
-          <div className="bg-white rounded-lg shadow-xl border-2 border-[#003082] p-6">
+        <div className="fixed inset-x-4 top-16 bottom-0 z-[1001] flex items-center justify-center pointer-events-none">
+          <div className="bg-white rounded-lg shadow-xl border-2 border-slate-200 p-6 w-full max-w-md pointer-events-auto">
             {manageView === 'main' && (
               <>
                 <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-xl text-[#003082]">Gestión de POI</h3>
+                  <h3 className="text-xl text-[rgb(0,50,130)]">Gestión de POI</h3>
                   <button onClick={() => setShowManagePanel(false)}>
                     <X className="w-5 h-5 text-gray-500" />
                   </button>
@@ -673,19 +1019,19 @@ export default function AdminView({ onGoHome }: AdminViewProps) {
                 <div className="flex flex-col gap-4">
                   <button
                     onClick={handleCreatePOI}
-                    className="px-6 py-4 bg-gray-50 rounded-lg hover:bg-gray-100 text-[#003082] border-2 border-gray-300"
+                    className="px-6 py-4 bg-gray-50 rounded-lg hover:bg-gray-100 text-[rgb(0,50,130)] border-2 border-gray-300"
                   >
                     Crear POI
                   </button>
                   <button
                     onClick={() => setManageView('edit')}
-                    className="px-6 py-4 bg-gray-50 rounded-lg hover:bg-gray-100 text-[#003082] border-2 border-gray-300"
+                    className="px-6 py-4 bg-gray-50 rounded-lg hover:bg-gray-100 text-[rgb(0,50,130)] border-2 border-gray-300"
                   >
                     Editar POI
                   </button>
                   <button
                     onClick={() => setManageView('delete')}
-                    className="px-6 py-4 bg-gray-50 rounded-lg hover:bg-gray-100 text-[#003082] border-2 border-gray-300"
+                    className="px-6 py-4 bg-gray-50 rounded-lg hover:bg-gray-100 text-[rgb(0,50,130)] border-2 border-gray-300"
                   >
                     Eliminar POI
                   </button>
@@ -696,7 +1042,7 @@ export default function AdminView({ onGoHome }: AdminViewProps) {
             {manageView === 'edit' && (
               <>
                 <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-xl text-[#003082]">Seleccionar POI</h3>
+                  <h3 className="text-xl text-[rgb(0,50,130)]">Seleccionar POI</h3>
                   <button onClick={() => setManageView('main')}>
                     <X className="w-5 h-5 text-gray-500" />
                   </button>
@@ -708,7 +1054,7 @@ export default function AdminView({ onGoHome }: AdminViewProps) {
                     className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 ${
                       showErrors && !selectedPOIForEdit
                         ? 'border-red-500 focus:ring-red-500'
-                        : 'border-[#003082] focus:ring-[#CF142B]'
+                        : 'border-[rgb(0,50,130)] focus:ring-blue-500'
                     }`}
                   >
                     <option value="">Seleccionar POI</option>
@@ -729,7 +1075,7 @@ export default function AdminView({ onGoHome }: AdminViewProps) {
             {manageView === 'delete' && (
               <>
                 <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-xl text-[#003082]">Eliminar POI</h3>
+                  <h3 className="text-xl text-[rgb(0,50,130)]">Eliminar POI</h3>
                   <button onClick={() => setManageView('main')}>
                     <X className="w-5 h-5 text-gray-500" />
                   </button>
@@ -748,19 +1094,59 @@ export default function AdminView({ onGoHome }: AdminViewProps) {
                     className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 ${
                       showErrors && !selectedPOIForEdit
                         ? 'border-red-500 focus:ring-red-500'
-                        : 'border-[#003082] focus:ring-[#CF142B]'
+                        : 'border-[rgb(0,50,130)] focus:ring-blue-500'
                     }`}
                   >
                     <option value="">Seleccionar POI</option>
                     {MOCK_POIS.map(poi => (
-                      <option key={poi.id} value={poi.id}>{poi.name}</option>
+                      <option key={poi.id} value={poi.id}>
+                        {poi.name} {poi.hasActiveEvent ? '📅' : ''}
+                      </option>
                     ))}
                   </select>
                   <button
-                    onClick={handleDeletePOI}
-                    className="w-full px-6 py-3 bg-[#CF142B] text-white rounded-lg hover:bg-[#a50f22] transition-colors"
+                    onClick={handleDeletePOIConfirm}
+                    className="w-full px-6 py-3 bg-[#C8102E] text-white rounded-lg hover:bg-[#a50f22] transition-colors"
                   >
                     Confirmar
+                  </button>
+                </div>
+              </>
+            )}
+
+            {manageView === 'delete-confirm' && (
+              <>
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-xl text-[#C8102E] flex items-center gap-2">
+                    <AlertTriangle className="w-6 h-6" />
+                    Advertencia
+                  </h3>
+                  <button onClick={() => setManageView('delete')}>
+                    <X className="w-5 h-5 text-gray-500" />
+                  </button>
+                </div>
+
+                <div className="mb-6 p-4 bg-yellow-50 border-2 border-yellow-400 rounded-lg">
+                  <p className="text-yellow-800 text-center mb-2">
+                    El POI seleccionado tiene un evento activo asociado.
+                  </p>
+                  <p className="text-sm text-yellow-700 text-center">
+                    ¿Está seguro de que desea continuar con la eliminación?
+                  </p>
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setManageView('delete')}
+                    className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleDeletePOI}
+                    className="flex-1 px-6 py-3 bg-[#C8102E] text-white rounded-lg hover:bg-[#a50f22] transition-colors"
+                  >
+                    Eliminar de todas formas
                   </button>
                 </div>
               </>
@@ -769,7 +1155,7 @@ export default function AdminView({ onGoHome }: AdminViewProps) {
             {(manageView === 'edit-form' || manageView === 'create-form') && (
               <>
                 <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-xl text-[#003082]">
+                  <h3 className="text-xl text-[rgb(0,50,130)]">
                     {manageView === 'edit-form' ? 'Editar POI' : 'Crear POI'}
                   </h3>
                   <button onClick={() => setManageView('main')}>
@@ -780,7 +1166,7 @@ export default function AdminView({ onGoHome }: AdminViewProps) {
                 {showSuccess && (
                   <div className="mb-4 p-3 bg-green-100 border border-green-400 rounded-lg">
                     <p className="text-green-700 text-center">
-                      ¡POI {manageView === 'edit-form' ? 'editado' : 'creado'} exitosamente!
+                      ¡POI {successAction === 'edited' ? 'editado' : 'creado'} exitosamente! Visualizando en el mapa...
                     </p>
                   </div>
                 )}
@@ -802,7 +1188,7 @@ export default function AdminView({ onGoHome }: AdminViewProps) {
                     className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 ${
                       showErrors && !editName
                         ? 'border-red-500 focus:ring-red-500'
-                        : 'border-[#003082] focus:ring-[#CF142B]'
+                        : 'border-[rgb(0,50,130)] focus:ring-blue-500'
                     }`}
                   />
 
@@ -812,7 +1198,7 @@ export default function AdminView({ onGoHome }: AdminViewProps) {
                     className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 ${
                       showErrors && !editCategory
                         ? 'border-red-500 focus:ring-red-500'
-                        : 'border-[#003082] focus:ring-[#CF142B]'
+                        : 'border-[rgb(0,50,130)] focus:ring-blue-500'
                     }`}
                   >
                     <option value="">Seleccionar categoría</option>
@@ -829,7 +1215,7 @@ export default function AdminView({ onGoHome }: AdminViewProps) {
                     className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 ${
                       (showErrors && !editCoordinates) || coordError
                         ? 'border-red-500 focus:ring-red-500'
-                        : 'border-[#003082] focus:ring-[#CF142B]'
+                        : 'border-[rgb(0,50,130)] focus:ring-blue-500'
                     }`}
                   />
 
@@ -839,7 +1225,7 @@ export default function AdminView({ onGoHome }: AdminViewProps) {
                     className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 ${
                       showErrors && !editCampus
                         ? 'border-red-500 focus:ring-red-500'
-                        : 'border-[#003082] focus:ring-[#CF142B]'
+                        : 'border-[rgb(0,50,130)] focus:ring-blue-500'
                     }`}
                   >
                     <option value="">Seleccionar sede</option>
@@ -854,7 +1240,7 @@ export default function AdminView({ onGoHome }: AdminViewProps) {
                     className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 ${
                       showErrors && !editFloor
                         ? 'border-red-500 focus:ring-red-500'
-                        : 'border-[#003082] focus:ring-[#CF142B]'
+                        : 'border-[rgb(0,50,130)] focus:ring-blue-500'
                     }`}
                   >
                     <option value="">Seleccionar piso</option>
@@ -865,7 +1251,7 @@ export default function AdminView({ onGoHome }: AdminViewProps) {
 
                   <button
                     onClick={() => setShowExternalLinkPanel(true)}
-                    className="w-full px-6 py-3 bg-gray-50 border-2 border-gray-300 text-[#003082] rounded-lg hover:bg-gray-100 transition-colors"
+                    className="w-full px-6 py-3 bg-gray-50 border-2 border-gray-300 text-[rgb(0,50,130)] rounded-lg hover:bg-gray-100 transition-colors"
                   >
                     Enlace externo
                   </button>
@@ -886,9 +1272,9 @@ export default function AdminView({ onGoHome }: AdminViewProps) {
       {/* External Link Panel */}
       {showExternalLinkPanel && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-[1002] flex items-center justify-center">
-          <div className="bg-white rounded-lg shadow-xl border-2 border-[#003082] p-6 w-[90%] max-w-md">
+          <div className="bg-white rounded-lg shadow-xl border-2 border-slate-200 p-6 w-[90%] max-w-md">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl text-[#003082]">Enlace Externo</h3>
+              <h3 className="text-xl text-[rgb(0,50,130)]">Enlace Externo</h3>
               <button onClick={() => {
                 setShowExternalLinkPanel(false);
                 setSelectedModule('');
@@ -905,7 +1291,7 @@ export default function AdminView({ onGoHome }: AdminViewProps) {
                   setSelectedModule(e.target.value);
                   setSelectedModuleInfo('');
                 }}
-                className="w-full px-4 py-3 border-2 border-[#003082] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CF142B]"
+                className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Seleccionar módulo</option>
                 {MODULES.map(mod => (
@@ -917,7 +1303,7 @@ export default function AdminView({ onGoHome }: AdminViewProps) {
                 <select
                   value={selectedModuleInfo}
                   onChange={(e) => setSelectedModuleInfo(e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-[#003082] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CF142B]"
+                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">Seleccionar información</option>
                   {MODULE_INFO[selectedModule]?.map(info => (
@@ -939,49 +1325,61 @@ export default function AdminView({ onGoHome }: AdminViewProps) {
 
       {selectedPOI && (
         <>
-          <div className="absolute top-20 left-4 right-4 z-[1000] bg-white rounded-lg shadow-xl border-2 border-[#003082] max-w-md mx-auto p-4">
+          <div className="absolute top-20 left-4 right-4 z-[1000] bg-white rounded-lg shadow-xl border-2 border-slate-200 max-w-md mx-auto p-4">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg text-[#003082]">Panel informativo</h3>
+              <h3 className="text-lg text-[rgb(0,50,130)]">Panel informativo</h3>
               <button onClick={() => setSelectedPOI(null)}>
                 <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>
             {infoError ? (
-              <p className="text-[#CF142B] text-sm">
+              <p className="text-[#C8102E] text-sm">
                 Error al recuperar la información. Por favor, intente más tarde.
               </p>
             ) : (
               <div className="space-y-2 text-sm">
                 <div>
                   <span className="text-gray-600">Nombre:</span>{' '}
-                  <span className="text-[#003082]">{selectedPOI.name}</span>
+                  <span className="text-[rgb(0,50,130)]">{selectedPOI.name}</span>
                 </div>
                 <div>
                   <span className="text-gray-600">Categoría:</span>{' '}
-                  <span className="text-[#003082]">{selectedPOI.category}</span>
+                  <span className="text-[rgb(0,50,130)]">{selectedPOI.category}</span>
                 </div>
                 <div>
                   <span className="text-gray-600">Sede:</span>{' '}
-                  <span className="text-[#003082]">{selectedPOI.campus}</span>
+                  <span className="text-[rgb(0,50,130)]">{selectedPOI.campus}</span>
                 </div>
                 <div>
                   <span className="text-gray-600">Piso:</span>{' '}
-                  <span className="text-[#003082]">{selectedPOI.floor}</span>
+                  <span className="text-[rgb(0,50,130)]">{selectedPOI.floor}</span>
                 </div>
                 {selectedPOI.description && (
                   <div>
                     <span className="text-gray-600">Descripción:</span>{' '}
-                    <span className="text-[#003082]">{selectedPOI.description}</span>
+                    <span className="text-[rgb(0,50,130)]">{selectedPOI.description}</span>
+                  </div>
+                )}
+                {selectedPOI.hasActiveEvent && (
+                  <div className="mt-3 p-3 bg-red-50 border border-[#C8102E] rounded-lg">
+                    <div className="text-[#C8102E] flex items-center gap-2 mb-1">
+                      <Calendar className="w-4 h-4" />
+                      <span>Evento Activo</span>
+                    </div>
+                    <div className="text-xs text-gray-600">
+                      <div>Tipo: {selectedPOI.eventCategory}</div>
+                      <div>Fecha: {selectedPOI.eventStartDate} al {selectedPOI.eventEndDate}</div>
+                    </div>
                   </div>
                 )}
               </div>
             )}
           </div>
 
-          <div className="absolute bottom-24 left-4 right-4 z-[1000] bg-white rounded-lg shadow-xl border-2 border-[#003082] max-w-md mx-auto p-4">
-            <h3 className="text-lg text-[#003082] mb-4">Panel de detalle</h3>
+          <div className="absolute bottom-4 left-4 right-4 z-[1000] bg-white rounded-lg shadow-xl border-2 border-slate-200 max-w-md mx-auto p-4">
+            <h3 className="text-lg text-[rgb(0,50,130)] mb-4">Panel de detalle</h3>
             {detailError ? (
-              <p className="text-[#CF142B] text-sm">
+              <p className="text-[#C8102E] text-sm">
                 Error al recuperar los detalles. Por favor, intente más tarde.
               </p>
             ) : (
@@ -995,7 +1393,7 @@ export default function AdminView({ onGoHome }: AdminViewProps) {
                         href={link}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="block text-[#CF142B] hover:underline text-sm"
+                        className="block text-[#C8102E] hover:underline text-sm truncate"
                       >
                         {link}
                       </a>
@@ -1013,7 +1411,7 @@ export default function AdminView({ onGoHome }: AdminViewProps) {
           {mapError && (
             <div className="absolute inset-0 flex items-center justify-center bg-gray-900 z-0">
               <div className="bg-white p-6 rounded-lg shadow-xl max-w-md mx-4">
-                <p className="text-[#CF142B] text-center">
+                <p className="text-[#C8102E] text-center">
                   No se pudo cargar el mapa. Verifica tu conexión a internet.
                 </p>
               </div>

@@ -180,3 +180,33 @@
     line-height: 1.5;
   }
 }
+
+.custom-event-icon {
+  overflow: visible !important;
+  background: transparent;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.event-marker {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  box-sizing: border-box;
+}
+
+@keyframes event-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: scale(1.5);
+    opacity: 0.4;
+  }
+}
+

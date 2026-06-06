@@ -14,6 +14,7 @@ interface POI {
   position: [number, number];
   description?: string;
   externalLinks?: string[];
+  hasActiveEvent?: boolean;
 }
 
 // Campus boundaries with NW, NE, SE, SW coordinates
@@ -117,6 +118,8 @@ const generatePOIsForCampus = (
       const lat = minLat + (row + 0.5) * (latRange / gridSize) + randomOffsetLat;
       const lng = minLng + (col + 0.5) * (lngRange / gridSize) + randomOffsetLng;
 
+      const hasActiveEvent = index % 6 === 0;
+
       pois.push({
         id: `${id}`,
         name: `${poiType.name} ${String.fromCharCode(65 + index)}`,
@@ -124,7 +127,8 @@ const generatePOIsForCampus = (
         campus: campusName,
         floor: floor,
         position: [lat, lng],
-        description: `${poiType.description}`
+        description: `${poiType.description}`,
+        hasActiveEvent
       });
       id++;
     });
@@ -165,7 +169,7 @@ interface StudentViewProps {
 export default function StudentView({ onGoHome }: StudentViewProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
-  const rectanglesRef = useRef<L.Rectangle[]>([]);
+  const rectanglesRef = useRef<L.Layer[]>([]);
 
   const [selectedCampus, setSelectedCampus] = useState('Ignacio Domeyko');
   const [selectedFloor, setSelectedFloor] = useState(1);
@@ -336,18 +340,30 @@ export default function StudentView({ onGoHome }: StudentViewProps) {
     filteredPOIs.forEach(poi => {
       const color = CATEGORY_COLORS[poi.category] || '#6B7280';
 
-      const circle = L.circleMarker(poi.position, {
-        radius: 8,
-        color: '#ffffff',
-        fillColor: color,
-        fillOpacity: 0.9,
-        weight: 2
-      })
+      const marker = poi.hasActiveEvent
+        ? L.marker(poi.position, {
+            icon: L.divIcon({
+              className: 'custom-event-icon',
+              html: `<div class="event-marker" style="background-color: ${color}; border: 2px solid ${color}; width: 18px; height: 18px; border-radius: 50%; box-sizing: border-box; animation: event-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;"></div>`,
+              iconSize: [24, 24],
+              iconAnchor: [12, 12],
+              popupAnchor: [0, -10]
+            })
+          })
+        : L.circleMarker(poi.position, {
+            radius: 8,
+            color: '#ffffff',
+            fillColor: color,
+            fillOpacity: 0.9,
+            weight: 2
+          });
+
+      marker
         .addTo(mapInstanceRef.current!)
-        .bindPopup(`<div style="color: ${color};"><strong>${poi.name}</strong><br/>${poi.category}</div>`)
+        .bindPopup(`<div style="color: ${color};"><strong>${poi.name}</strong><br/>${poi.category}${poi.hasActiveEvent ? '<br/><span style="color: #C8102E;">📅 Evento Activo</span>' : ''}</div>`)
         .on('click', () => handlePOIClick(poi));
 
-      rectanglesRef.current.push(circle);
+      rectanglesRef.current.push(marker);
     });
   }, [filteredPOIs, selectedFloor]);
 
