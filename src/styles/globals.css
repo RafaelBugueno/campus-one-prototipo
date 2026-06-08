@@ -9,6 +9,12 @@
   --sidebar-accent-foreground: hsl(0, 0%, 100%);
   --sidebar-border: hsl(218, 60%, 35%);
   --sidebar-ring: hsl(0, 0%, 100%);
+  :root {
+  --rating-sidebar: hsl(218, 100%, 26%);
+  --rating-sidebar-foreground: hsl(0, 0%, 100%);
+  --rating-sidebar-accent: hsl(218, 80%, 32%);
+  --rating-sidebar-border: hsl(218, 60%, 35%);
+}
 
   /* Tailwind v4 color token mapping */
   --color-sidebar: var(--sidebar);
@@ -110,3 +116,15 @@
 .bg-gradient-primary { background: linear-gradient(135deg, hsl(218, 100%, 26%), hsl(210, 90%, 45%)); }
 .bg-gradient-soft    { background: linear-gradient(135deg, hsl(218, 100%, 96%), hsl(210, 80%, 92%)); }
 .bg-gradient-gold    { background: linear-gradient(135deg, hsl(43, 90%, 58%), hsl(35, 85%, 50%)); }
+:root {
+  --sidebar: hsl(218, 100%, 26%);
+  --color-sidebar: hsl(218, 100%, 26%);
+  --sidebar-foreground: hsl(0, 0%, 100%);
+  --color-sidebar-foreground: hsl(0, 0%, 100%);
+  --sidebar-accent: hsl(218, 80%, 32%);
+  --color-sidebar-accent: hsl(218, 80%, 32%);
+  --sidebar-accent-foreground: hsl(0, 0%, 100%);
+  --color-sidebar-accent-foreground: hsl(0, 0%, 100%);
+  --sidebar-border: hsl(218, 60%, 35%);
+  --color-sidebar-border: hsl(218, 60%, 35%);
+}
