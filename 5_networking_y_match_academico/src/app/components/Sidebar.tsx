@@ -43,7 +43,7 @@ const CampusOneLogo = ({ className }: { className?: string }) => (
 
 const matchItems = [
   { title: 'Match Académico', icon: Users, path: '/' },
-  { title: 'Ver Perfil', icon: UserCircle, path: '/edit-profile' },
+  { title: 'Ver Perfil', icon: UserCircle, path: '/networking-y-match-academico/edit-profile' },
 ];
 
 const hubItems = [
