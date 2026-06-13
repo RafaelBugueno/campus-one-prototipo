@@ -7,6 +7,7 @@ import EditProfile from '../../../../5_networking_y_match_academico/src/app/page
 import Agenda from '../../../../5_networking_y_match_academico/src/app/pages/Agenda';
 import AdminPanel from '../../../../5_networking_y_match_academico/src/app/pages/AdminPanel';
 import OrganizerPanel from '../../../../5_networking_y_match_academico/src/app/pages/OrganizerPanel';
+import { Footer } from '../Footer';
 
 export function NetworkingRouter() {
   const { userType, isAuthenticated } = useAuth();
@@ -16,23 +17,28 @@ export function NetworkingRouter() {
   }
 
   return (
-    <Routes>
-      <Route path="/" element={<Navigate to="home" replace />} />
+    <div className="min-h-screen flex flex-col bg-white">
+      <div className="flex-1">
+        <Routes>
+          <Route path="/" element={<Navigate to="home" replace />} />
 
-      <Route path="home" element={<TechHub />} />
-      <Route path="profile/:id" element={<ProfileView />} />
-      <Route path="edit-profile" element={<EditProfile />} />
-      <Route path="agenda" element={<Agenda />} />
+          <Route path="home" element={<TechHub />} />
+          <Route path="profile/:id" element={<ProfileView />} />
+          <Route path="edit-profile" element={<EditProfile />} />
+          <Route path="agenda" element={<Agenda />} />
 
-      {userType === 'admin' && (
-        <Route path="admin" element={<AdminPanel />} />
-      )}
+          {userType === 'admin' && (
+            <Route path="admin" element={<AdminPanel />} />
+          )}
 
-      {userType === 'organizer' && (
-        <Route path="organizer" element={<OrganizerPanel />} />
-      )}
+          {userType === 'organizer' && (
+            <Route path="organizer" element={<OrganizerPanel />} />
+          )}
 
-      <Route path="*" element={<Navigate to="home" replace />} />
-    </Routes>
+          <Route path="*" element={<Navigate to="home" replace />} />
+        </Routes>
+      </div>
+      <Footer />
+    </div>
   );
 }

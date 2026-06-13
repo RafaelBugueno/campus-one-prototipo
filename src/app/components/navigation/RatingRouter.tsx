@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoginModal } from '../LoginModal';
 import RatingApp from '../RatingApp';
+import { Footer } from '../Footer';
 
 export function RatingRouter() {
   const { userType, isAuthenticated } = useAuth();
@@ -51,8 +52,11 @@ export function RatingRouter() {
   }
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-background z-[2000]">
-      <RatingApp />
+    <div className="min-h-screen w-screen flex flex-col bg-background z-[2000]">
+      <div className="flex-1">
+        <RatingApp />
+      </div>
+      <Footer />
     </div>
   );
 }

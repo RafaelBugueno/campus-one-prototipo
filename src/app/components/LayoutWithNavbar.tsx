@@ -137,8 +137,14 @@ export function LayoutWithNavbar({ children }: LayoutWithNavbarProps) {
       </AnimatePresence>
 
       {/* Contenido principal con padding-top para el navbar */}
-      <div className="pt-14">
-        {children}
+      <div className="pt-14 min-h-screen flex flex-col">
+        <div className="flex-1">
+          {children}
+        </div>
+
+        <footer className="bg-blue-600 h-16 relative">
+          <div className="h-full w-full" />
+        </footer>
       </div>
 
       {/* Botón de Login/Logout Circular Flotante */}

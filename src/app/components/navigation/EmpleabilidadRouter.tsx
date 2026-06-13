@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoginModal } from '../LoginModal';
 import PublicationsList from '../../../../3_empleabilidad_y_colaboracion/src/app/components/PublicationsList';
+import { Footer } from '../Footer';
 
 export function EmpleabilidadRouter() {
   const { userType, isAuthenticated } = useAuth();
@@ -63,8 +64,11 @@ export function EmpleabilidadRouter() {
   };
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-white">
-      <PublicationsList initialUserType={getUserTypeParam()} />
+    <div className="min-h-screen w-screen flex flex-col bg-white">
+      <div className="flex-1">
+        <PublicationsList initialUserType={getUserTypeParam()} />
+      </div>
+      <Footer />
     </div>
   );
 }
