@@ -88,7 +88,7 @@ export function LayoutWithNavbar({ children }: LayoutWithNavbarProps) {
             className="fixed top-14 left-0 right-0 z-[1300] px-4 pt-2 pb-2 bg-gradient-to-b from-white via-white/80 to-transparent pointer-events-none"
           >
             <div className="max-w-4xl mx-auto pointer-events-auto">
-              <div className="relative rounded-xl overflow-hidden shadow-lg border border-slate-200 bg-gradient-to-br from-purple-900 via-purple-800 to-pink-900 cursor-grab active:cursor-grabbing">
+              <div className="relative rounded-xl overflow-hidden shadow-lg border border-slate-200 bg-gradient-to-br from-[#003082] via-[#003082]/80 to-[#CF142B] cursor-grab active:cursor-grabbing">
                 {/* Drag indicator */}
                 <div className="absolute top-1.5 left-1/2 -translate-x-1/2 w-10 h-0.5 bg-white/40 rounded-full" />
 
@@ -97,12 +97,12 @@ export function LayoutWithNavbar({ children }: LayoutWithNavbarProps) {
                     <div className="flex-1 min-w-0">
                       {/* Live Badge */}
                       <div className="flex items-center gap-2 mb-1.5">
-                        <div className="flex items-center gap-1.5 bg-emerald-500/20 backdrop-blur-sm rounded-full px-2 py-0.5 border border-emerald-400/30">
-                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                          <span className="text-emerald-300 text-xs font-semibold">
-                            En vivo
-                          </span>
-                        </div>
+                        <div className="flex items-center gap-1.5 bg-[#CF142B]/20 backdrop-blur-sm rounded-full px-2 py-0.5 border border-[#CF142B]/30">
+                            <div className="w-1.5 h-1.5 rounded-full bg-[#CF142B] animate-pulse" />
+                            <span className="text-white text-xs font-semibold">
+                              En vivo
+                            </span>
+                          </div>
                       </div>
 
                       {/* Event Info */}
@@ -128,8 +128,8 @@ export function LayoutWithNavbar({ children }: LayoutWithNavbarProps) {
                 </div>
 
                 {/* Decorative gradient overlay */}
-                <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-pink-500/20 to-transparent rounded-full blur-xl pointer-events-none" />
-                <div className="absolute bottom-0 left-0 w-20 h-20 bg-gradient-to-tr from-purple-600/20 to-transparent rounded-full blur-xl pointer-events-none" />
+                <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#CF142B]/20 to-transparent rounded-full blur-xl pointer-events-none" />
+                <div className="absolute bottom-0 left-0 w-20 h-20 bg-gradient-to-tr from-[#003082]/20 to-transparent rounded-full blur-xl pointer-events-none" />
               </div>
             </div>
           </motion.div>
