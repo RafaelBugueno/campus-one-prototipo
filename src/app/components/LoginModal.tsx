@@ -8,7 +8,7 @@ interface LoginModalProps {
   onClose: () => void;
 }
 
-type ModalView = 'login' | 'register' | 'register-code' | 'register-success';
+type ModalView = 'login' | 'register' | 'register-code' | 'register-profile' | 'register-success';
 
 export function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const { login } = useAuth();
@@ -28,6 +28,27 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const [codeInput, setCodeInput] = useState('');
   const [registrationCode] = useState('1111'); // Código siempre 1111
   const [codeError, setCodeError] = useState('');
+  // Estados para campos por perfil
+  const [profile, setProfile] = useState({
+    nombre: '',
+    apellido: '',
+    correo_institucional: registrationEmail,
+    carrera: '',
+    nivel_academico: '',
+    empresa_nombre: '',
+    empresa_descripcion: '',
+    empresa_ubicacion: '',
+    empresa_contacto_email: '',
+    empresa_contacto_telefono: '',
+    empresa_datos_institucionales: '',
+    expositor_carrera: '',
+    expositor_cursando: '',
+    expositor_graduado_o_docente: '',
+    expositor_nivel: '',
+    tipo_docente: '',
+    contacto_email: '',
+  });
+  const [profileError, setProfileError] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -126,7 +147,58 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
       return;
     }
 
-    // Código correcto, mostrar mensaje de éxito
+    // Código correcto, pasar a formulario por perfil antes de éxito
+    setProfile((p) => ({ ...p, correo_institucional: registrationEmail }));
+    setCurrentView('register-profile');
+  };
+
+  const handleProfileChange = (key: string, value: string) => {
+    setProfile((p) => ({ ...p, [key]: value }));
+  };
+
+  const handleProfileSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setProfileError('');
+
+    // Validaciones mínimas por tipo
+    if (userType === 'estudiante') {
+      if (!profile.nombre.trim() || !profile.apellido.trim() || !profile.carrera.trim()) {
+        setProfileError('Por favor completa nombre, apellido y carrera');
+        return;
+      }
+    }
+
+    if (userType === 'empresario') {
+      if (!profile.empresa_nombre.trim() || !profile.empresa_descripcion.trim()) {
+        setProfileError('Por favor completa nombre y descripción de la empresa');
+        return;
+      }
+    }
+
+    if (userType === 'academico') {
+      if (!profile.nombre.trim() || !profile.contacto_email.trim()) {
+        setProfileError('Por favor completa nombre y correo de contacto');
+        return;
+      }
+    }
+
+    // Organizador y Administrador requieren tipo_docente
+    if (userType === 'organizador' || userType === 'administrador') {
+      if (!profile.nombre.trim() || !profile.tipo_docente.trim()) {
+        setProfileError('Por favor completa nombre y tipo de docente');
+        return;
+      }
+    }
+
+    // Mentor/expositor: require nombre
+    if (userType === 'mentor') {
+      if (!profile.nombre.trim()) {
+        setProfileError('Por favor ingresa el nombre');
+        return;
+      }
+    }
+
+    // Aquí se podría enviar al servidor la información completa de registro + perfil
     setCurrentView('register-success');
   };
 
@@ -142,6 +214,26 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
     setRegistrationError('');
     setCodeInput('');
     setCodeError('');
+    setProfile({
+      nombre: '',
+      apellido: '',
+      correo_institucional: '',
+      carrera: '',
+      nivel_academico: '',
+      empresa_nombre: '',
+      empresa_descripcion: '',
+      empresa_ubicacion: '',
+      empresa_contacto_email: '',
+      empresa_contacto_telefono: '',
+      empresa_datos_institucionales: '',
+      expositor_carrera: '',
+      expositor_cursando: '',
+      expositor_graduado_o_docente: '',
+      expositor_nivel: '',
+      tipo_docente: '',
+      contacto_email: '',
+    });
+    setProfileError('');
     onClose();
   };
 
@@ -154,6 +246,26 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
     setRegistrationError('');
     setCodeInput('');
     setCodeError('');
+    setProfile({
+      nombre: '',
+      apellido: '',
+      correo_institucional: '',
+      carrera: '',
+      nivel_academico: '',
+      empresa_nombre: '',
+      empresa_descripcion: '',
+      empresa_ubicacion: '',
+      empresa_contacto_email: '',
+      empresa_contacto_telefono: '',
+      empresa_datos_institucionales: '',
+      expositor_carrera: '',
+      expositor_cursando: '',
+      expositor_graduado_o_docente: '',
+      expositor_nivel: '',
+      tipo_docente: '',
+      contacto_email: '',
+    });
+    setProfileError('');
   };
 
   return (
@@ -474,6 +586,159 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
               )}
 
               {/* VISTA DE ÉXITO */}
+              {/* VISTA DE PERFIL (campos según tipo) */}
+              {currentView === 'register-profile' && (
+                <>
+                  <div
+                    className="px-8 py-6 text-white"
+                    style={{
+                      background: 'linear-gradient(135deg, rgb(0,50,130), rgb(0,123,255))',
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-2xl font-['Museo_Sans'] font-bold">Información adicional</h2>
+                      <button onClick={handleCloseModal} className="text-white/75 hover:text-white transition-colors">
+                        <X size={24} />
+                      </button>
+                    </div>
+                    <p className="mt-1 text-sm text-white/75">Completa los datos según tu perfil: {userType}</p>
+                  </div>
+
+                  <form onSubmit={handleProfileSubmit} className="p-8 space-y-5">
+                    {profileError && (
+                      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm font-['Museo_Sans']">
+                        {profileError}
+                      </div>
+                    )}
+
+                    {/* Estudiante */}
+                    {userType === 'estudiante' && (
+                      <>
+                        <div>
+                          <label className="block text-sm font-['Museo_Sans'] font-semibold text-slate-700 mb-2">Nombre</label>
+                          <input className="w-full h-11 px-4 border border-slate-200 rounded-xl bg-white text-sm text-slate-700" value={profile.nombre} onChange={(e)=>handleProfileChange('nombre', e.target.value)} />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-['Museo_Sans'] font-semibold text-slate-700 mb-2">Apellido</label>
+                          <input className="w-full h-11 px-4 border border-slate-200 rounded-xl bg-white text-sm text-slate-700" value={profile.apellido} onChange={(e)=>handleProfileChange('apellido', e.target.value)} />
+                        </div>
+                            <div>
+                              <label className="block text-sm font-['Museo_Sans'] font-semibold text-slate-700 mb-2">Carrera</label>
+                              <input className="w-full h-11 px-4 border border-slate-200 rounded-xl bg-white text-sm text-slate-700" value={profile.carrera} onChange={(e)=>handleProfileChange('carrera', e.target.value)} />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-['Museo_Sans'] font-semibold text-slate-700 mb-2">Nivel académico (número)</label>
+                              <input type="number" min="0" className="w-full h-11 px-4 border border-slate-200 rounded-xl bg-white text-sm text-slate-700" value={profile.nivel_academico} onChange={(e)=>handleProfileChange('nivel_academico', e.target.value)} />
+                            </div>
+                      </>
+                    )}
+
+                    {/* Académico */}
+                    {userType === 'academico' && (
+                      <>
+                        <div>
+                          <label className="block text-sm font-['Museo_Sans'] font-semibold text-slate-700 mb-2">Nombre</label>
+                          <input className="w-full h-11 px-4 border border-slate-200 rounded-xl bg-white text-sm text-slate-700" value={profile.nombre} onChange={(e)=>handleProfileChange('nombre', e.target.value)} />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-['Museo_Sans'] font-semibold text-slate-700 mb-2">Correo de contacto</label>
+                          <input type="email" className="w-full h-11 px-4 border border-slate-200 rounded-xl bg-white text-sm text-slate-700" value={profile.contacto_email} onChange={(e)=>handleProfileChange('contacto_email', e.target.value)} />
+                        </div>
+                      </>
+                    )}
+
+                    {/* Empresario */}
+                    {userType === 'empresario' && (
+                      <>
+                        <div>
+                          <label className="block text-sm font-['Museo_Sans'] font-semibold text-slate-700 mb-2">Nombre de empresa</label>
+                          <input className="w-full h-11 px-4 border border-slate-200 rounded-xl bg-white text-sm text-slate-700" value={profile.empresa_nombre} onChange={(e)=>handleProfileChange('empresa_nombre', e.target.value)} />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-['Museo_Sans'] font-semibold text-slate-700 mb-2">Descripción</label>
+                          <textarea className="w-full px-4 py-3 border border-slate-200 rounded-xl bg-white text-sm text-slate-700" value={profile.empresa_descripcion} onChange={(e)=>handleProfileChange('empresa_descripcion', e.target.value)} />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-['Museo_Sans'] font-semibold text-slate-700 mb-2">Ubicación</label>
+                          <input className="w-full h-11 px-4 border border-slate-200 rounded-xl bg-white text-sm text-slate-700" value={profile.empresa_ubicacion} onChange={(e)=>handleProfileChange('empresa_ubicacion', e.target.value)} />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-['Museo_Sans'] font-semibold text-slate-700 mb-2">Teléfono</label>
+                          <input className="w-full h-11 px-4 border border-slate-200 rounded-xl bg-white text-sm text-slate-700" value={profile.empresa_contacto_telefono} onChange={(e)=>handleProfileChange('empresa_contacto_telefono', e.target.value)} />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-['Museo_Sans'] font-semibold text-slate-700 mb-2">Datos institucionales</label>
+                          <textarea className="w-full px-4 py-3 border border-slate-200 rounded-xl bg-white text-sm text-slate-700" value={profile.empresa_datos_institucionales} onChange={(e)=>handleProfileChange('empresa_datos_institucionales', e.target.value)} />
+                        </div>
+                      </>
+                    )}
+
+                    {/* Expositor */}
+                    {userType === 'mentor' && (
+                      <>
+                        <div>
+                          <label className="block text-sm font-['Museo_Sans'] font-semibold text-slate-700 mb-2">Nombre</label>
+                          <input className="w-full h-11 px-4 border border-slate-200 rounded-xl bg-white text-sm text-slate-700" value={profile.nombre} onChange={(e)=>handleProfileChange('nombre', e.target.value)} />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-['Museo_Sans'] font-semibold text-slate-700 mb-2">Carrera (y cursando)</label>
+                          <input className="w-full h-11 px-4 border border-slate-200 rounded-xl bg-white text-sm text-slate-700" value={profile.expositor_carrera} onChange={(e)=>handleProfileChange('expositor_carrera', e.target.value)} />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-['Museo_Sans'] font-semibold text-slate-700 mb-2">Graduado o docente</label>
+                          <select className="w-full h-11 px-4 border border-slate-200 rounded-xl bg-white text-sm text-slate-700" value={profile.expositor_graduado_o_docente} onChange={(e)=>handleProfileChange('expositor_graduado_o_docente', e.target.value)}>
+                            <option value="">Selecciona</option>
+                            <option value="graduado">Graduado</option>
+                            <option value="docente">Docente</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-['Museo_Sans'] font-semibold text-slate-700 mb-2">Nivel (número)</label>
+                          <input type="number" min="0" className="w-full h-11 px-4 border border-slate-200 rounded-xl bg-white text-sm text-slate-700" value={profile.expositor_nivel} onChange={(e)=>handleProfileChange('expositor_nivel', e.target.value)} />
+                        </div>
+                      </>
+                    )}
+
+                    {/* Organizador */}
+                    {userType === 'organizador' && (
+                      <>
+                        <div>
+                          <label className="block text-sm font-['Museo_Sans'] font-semibold text-slate-700 mb-2">Nombre</label>
+                          <input className="w-full h-11 px-4 border border-slate-200 rounded-xl bg-white text-sm text-slate-700" value={profile.nombre} onChange={(e)=>handleProfileChange('nombre', e.target.value)} />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-['Museo_Sans'] font-semibold text-slate-700 mb-2">Tipo de docente</label>
+                          <input className="w-full h-11 px-4 border border-slate-200 rounded-xl bg-white text-sm text-slate-700" value={profile.tipo_docente} onChange={(e)=>handleProfileChange('tipo_docente', e.target.value)} />
+                        </div>
+                      </>
+                    )}
+
+                    {/* Administrador */}
+                    {userType === 'administrador' && (
+                      <>
+                        <div>
+                          <label className="block text-sm font-['Museo_Sans'] font-semibold text-slate-700 mb-2">Nombre</label>
+                          <input className="w-full h-11 px-4 border border-slate-200 rounded-xl bg-white text-sm text-slate-700" value={profile.nombre} onChange={(e)=>handleProfileChange('nombre', e.target.value)} />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-['Museo_Sans'] font-semibold text-slate-700 mb-2">Tipo de docente</label>
+                          <select className="w-full h-11 px-4 border border-slate-200 rounded-xl bg-white text-sm text-slate-700" value={profile.tipo_docente} onChange={(e)=>handleProfileChange('tipo_docente', e.target.value)}>
+                            <option value="">Selecciona</option>
+                            <option value="jefe_carrera">Jefe de carrera</option>
+                            <option value="profesor">Profesor</option>
+                            <option value="ayudantia">Ayudantía</option>
+                          </select>
+                        </div>
+                      </>
+                    )}
+
+                    <motion.button type="submit" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="w-full h-11 bg-[rgb(0,123,255)] hover:bg-[#003082] text-white rounded-xl font-['Museo_Sans'] font-semibold transition-colors shadow-sm mt-6">Enviar información</motion.button>
+
+                    <motion.button type="button" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setCurrentView('register-code')} className="w-full h-10 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-['Museo_Sans'] text-sm font-semibold transition-colors">Volver</motion.button>
+                  </form>
+                </>
+              )}
+
               {currentView === 'register-success' && (
                 <>
                   {/* Header con gradiente */}
