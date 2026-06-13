@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FileText, Users, Briefcase, GraduationCap, Bell, PanelLeft, ChevronDown, ChevronUp, X, Navigation, BarChart, Settings, Network, Star, AlertTriangle, CheckCircle, BookOpen } from 'lucide-react';
 import Logo from '../../imports/logoCampusOne.svg';
 
@@ -452,6 +453,7 @@ const mockPublications: Publication[] = [
 ];
 
 export default function PublicationsList() {
+  const navigate = useNavigate();
   const [userType, setUserType] = useState<UserType>('estudiante');
   const [showUserTypeModal, setShowUserTypeModal] = useState(false);
   const [ownershipFilter, setOwnershipFilter] = useState<OwnershipFilter>('general');
@@ -2413,15 +2415,19 @@ export default function PublicationsList() {
       >
         {/* Header de la sidebar */}
         <div className="p-4 border-b border-white/10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
-              <img src={Logo} alt="CampusOne Logo" className="w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="text-white font-bold ">CampusOne</h1>
-              <p className="text-gray-300 text-xs">Universidad de La Serena</p>
-            </div>
+          <button
+          type="button"
+          onClick={() => navigate('/')}
+          className="flex items-center gap-3 w-full text-left"
+        >
+          <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+            <img src={Logo} alt="CampusOne Logo" className="w-6 h-6" />
           </div>
+          <div>
+            <h1 className="text-white font-bold ">CampusOne</h1>
+            <p className="text-gray-300 text-xs">Universidad de La Serena</p>
+          </div>
+        </button>
         </div>
 
         <div className="flex-1 overflow-y-auto">
