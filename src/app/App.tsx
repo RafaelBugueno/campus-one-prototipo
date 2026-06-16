@@ -34,16 +34,11 @@ function HomePage() {
       const scrolled = window.scrollY;
       const progress = Math.min(scrolled / heroHeight, 1);
       setScrollProgress(progress);
-
-      // Redirigir a mapa_visitante cuando el usuario haga scroll hacia abajo
-      if (scrolled > 200) {
-        navigate('/mapa_visitante');
-      }
     };
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [navigate]);
+  }, []);
 
   return (
     <LayoutWithNavbar>
@@ -86,36 +81,23 @@ function HomePage() {
             </div>
           </div>
 
-          {/* Sección blanca con párrafos */}
+          {/* Sección blanca con párrafos - STICKY */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.7 }}
-            className="bg-slate-50 px-8 md:px-16 py-12"
-            style={{
-              opacity: 1 - scrollProgress * 1.2
-            }}
+            className="sticky top-14 bg-slate-50 px-8 md:px-16 py-12 z-[100] shadow-none"
           >
             <div className="max-w-3xl mx-auto space-y-6">
               {/* Párrafo 1 */}
-              <motion.p
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.9 }}
-                className="text-base font-['Museo_Sans'] text-gray-700 leading-relaxed"
-              >
+              <p className="text-base font-['Museo_Sans'] text-gray-700 leading-relaxed">
                 La Universidad de La Serena, con más de 40 años de trayectoria, es una institución pública comprometida con la excelencia académica, la investigación y el desarrollo regional.
-              </motion.p>
+              </p>
 
               {/* Párrafo 2 */}
-              <motion.p
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 1.1 }}
-                className="text-base font-['Museo_Sans'] text-gray-700 leading-relaxed"
-              >
+              <p className="text-base font-['Museo_Sans'] text-gray-700 leading-relaxed">
                 Este sitio, desarrollado por estudiantes para estudiantes, reúne herramientas y recursos creados desde la experiencia directa para facilitar la conexión, orientación y acceso a oportunidades dentro de la comunidad.
-              </motion.p>
+              </p>
             </div>
           </motion.div>
         </div>

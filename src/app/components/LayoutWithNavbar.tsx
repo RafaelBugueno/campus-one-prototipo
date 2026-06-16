@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { CustomNavbar } from './new-file';
 import { CustomSidebar } from './new-file1';
 import { LoginModal } from './LoginModal';
+import { Footer } from './Footer';
 import { useNavigate } from 'react-router-dom';
 import { LogIn, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -142,9 +143,7 @@ export function LayoutWithNavbar({ children }: LayoutWithNavbarProps) {
           {children}
         </div>
 
-        <footer className="bg-blue-600 h-16 relative">
-          <div className="h-full w-full" />
-        </footer>
+        <Footer />
       </div>
 
       {/* Botón de Login/Logout Circular Flotante */}

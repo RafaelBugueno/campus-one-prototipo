@@ -8,7 +8,7 @@ interface LoginModalProps {
   onClose: () => void;
 }
 
-type ModalView = 'login' | 'register' | 'register-code' | 'register-profile' | 'register-success';
+type ModalView = 'login' | 'register' | 'register-code' | 'register-profile' | 'register-success' | 'forgot-password' | 'forgot-password-sent';
 
 export function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const { login } = useAuth();
@@ -17,6 +17,10 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  
+  // Estados para Recuperación de Contraseña
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
+  const [forgotPasswordError, setForgotPasswordError] = useState('');
   
   // Estados para Registro
   const [currentView, setCurrentView] = useState<ModalView>('login');
@@ -202,6 +206,31 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
     setCurrentView('register-success');
   };
 
+  const handleForgotPasswordClick = () => {
+    setCurrentView('forgot-password');
+    setForgotPasswordEmail(email); // Pre-llenar con el email del login si existe
+    setForgotPasswordError('');
+  };
+
+  const handleForgotPasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotPasswordError('');
+
+    if (!forgotPasswordEmail.trim()) {
+      setForgotPasswordError('Por favor ingresa tu correo electrónico');
+      return;
+    }
+
+    if (!forgotPasswordEmail.endsWith('@userena.cl')) {
+      setForgotPasswordError('El correo debe terminar con @userena.cl');
+      return;
+    }
+
+    // Aquí se podría enviar al servidor para procesar la recuperación
+    // Por ahora solo mostramos la pantalla de confirmación
+    setCurrentView('forgot-password-sent');
+  };
+
   const handleCloseModal = () => {
     setEmail('');
     setPassword('');
@@ -234,6 +263,8 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
       contacto_email: '',
     });
     setProfileError('');
+    setForgotPasswordEmail('');
+    setForgotPasswordError('');
     onClose();
   };
 
@@ -266,6 +297,8 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
       contacto_email: '',
     });
     setProfileError('');
+    setForgotPasswordEmail('');
+    setForgotPasswordError('');
   };
 
   return (
@@ -366,20 +399,33 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
                       Ingresar
                     </motion.button>
 
-                    {/* Opción de registro */}
-                    <div className="pt-4 border-t border-slate-200">
-                      <p className="text-center text-sm text-slate-600 font-['Museo_Sans'] mb-3">
-                        ¿No tienes cuenta?
-                      </p>
-                      <motion.button
-                        type="button"
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => setCurrentView('register')}
-                        className="w-full h-11 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-['Museo_Sans'] font-semibold transition-colors"
-                      >
-                        Registrarse
-                      </motion.button>
+                    {/* Opciones */}
+                    <div className="pt-4 border-t border-slate-200 space-y-3">
+                      <div>
+                        <motion.button
+                          type="button"
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={handleForgotPasswordClick}
+                          className="w-full text-center text-sm text-blue-600 hover:text-blue-700 font-['Museo_Sans'] font-semibold transition-colors py-2"
+                        >
+                          Olvidé mi contraseña
+                        </motion.button>
+                      </div>
+                      <div>
+                        <p className="text-center text-sm text-slate-600 font-['Museo_Sans'] mb-3">
+                          ¿No tienes cuenta?
+                        </p>
+                        <motion.button
+                          type="button"
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => setCurrentView('register')}
+                          className="w-full h-11 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-['Museo_Sans'] font-semibold transition-colors"
+                        >
+                          Registrarse
+                        </motion.button>
+                      </div>
                     </div>
                   </form>
                 </>
@@ -782,6 +828,144 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
                       </p>
                       <p className="text-center font-['Museo_Sans'] font-semibold text-blue-600 break-all">
                         {registrationEmail}
+                      </p>
+                    </div>
+
+                    <motion.button
+                      type="button"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleCloseModal}
+                      className="w-full h-11 bg-[rgb(0,123,255)] hover:bg-[#003082] text-white rounded-xl font-['Museo_Sans'] font-semibold transition-colors shadow-sm mt-6"
+                    >
+                      Cerrar
+                    </motion.button>
+                  </div>
+                </>
+              )}
+
+              {/* VISTA DE OLVIDE CONTRASEÑA - INGRESO DE EMAIL */}
+              {currentView === 'forgot-password' && (
+                <>
+                  {/* Header con gradiente */}
+                  <div
+                    className="px-8 py-6 text-white"
+                    style={{
+                      background: 'linear-gradient(135deg, rgb(0,50,130), rgb(0,123,255))',
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-2xl font-['Museo_Sans'] font-bold">
+                        Recuperar contraseña
+                      </h2>
+                      <button
+                        onClick={handleCloseModal}
+                        className="text-white/75 hover:text-white transition-colors"
+                      >
+                        <X size={24} />
+                      </button>
+                    </div>
+                    <p className="mt-1 text-sm text-white/75">
+                      Ingresa tu correo para recibir instrucciones
+                    </p>
+                  </div>
+
+                  {/* Form */}
+                  <form onSubmit={handleForgotPasswordSubmit} className="p-8 space-y-5">
+                    {forgotPasswordError && (
+                      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm font-['Museo_Sans']">
+                        {forgotPasswordError}
+                      </div>
+                    )}
+
+                    <div>
+                      <label htmlFor="forgot-email" className="block text-sm font-['Museo_Sans'] font-semibold text-slate-700 mb-2">
+                        Correo electrónico
+                      </label>
+                      <input
+                        type="email"
+                        id="forgot-email"
+                        value={forgotPasswordEmail}
+                        onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                        required
+                        className="w-full h-11 px-4 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all font-['Museo_Sans'] text-sm text-slate-700"
+                        placeholder="tu.email@userena.cl"
+                      />
+                      <p className="mt-1 text-xs text-slate-500 font-['Museo_Sans']">
+                        El correo debe terminar con @userena.cl
+                      </p>
+                    </div>
+
+                    <motion.button
+                      type="submit"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="w-full h-11 bg-[rgb(0,123,255)] hover:bg-[#003082] text-white rounded-xl font-['Museo_Sans'] font-semibold transition-colors shadow-sm mt-6"
+                    >
+                      Confirmar
+                    </motion.button>
+
+                    {/* Volver al login */}
+                    <motion.button
+                      type="button"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleBackToLogin}
+                      className="w-full h-10 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-['Museo_Sans'] text-sm font-semibold transition-colors"
+                    >
+                      Volver al inicio de sesión
+                    </motion.button>
+                  </form>
+                </>
+              )}
+
+              {/* VISTA DE OLVIDE CONTRASEÑA - CONFIRMACIÓN ENVIADA */}
+              {currentView === 'forgot-password-sent' && (
+                <>
+                  {/* Header con gradiente */}
+                  <div
+                    className="px-8 py-6 text-white"
+                    style={{
+                      background: 'linear-gradient(135deg, rgb(0,50,130), rgb(0,123,255))',
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-2xl font-['Museo_Sans'] font-bold">
+                        Instrucciones enviadas
+                      </h2>
+                      <button
+                        onClick={handleCloseModal}
+                        className="text-white/75 hover:text-white transition-colors"
+                      >
+                        <X size={24} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Contenido de confirmación */}
+                  <div className="p-8 space-y-6">
+                    <div className="flex justify-center">
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+                      >
+                        <CheckCircle size={64} className="text-green-500" />
+                      </motion.div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <p className="text-center font-['Museo_Sans'] font-semibold text-slate-800">
+                        Las instrucciones para recuperar tu contraseña han sido enviadas
+                      </p>
+                      <p className="text-center font-['Museo_Sans'] text-sm text-slate-600">
+                        Revisa tu correo y sigue las instrucciones para crear una nueva contraseña:
+                      </p>
+                      <p className="text-center font-['Museo_Sans'] font-semibold text-blue-600 break-all">
+                        {forgotPasswordEmail}
+                      </p>
+                      <p className="text-center font-['Museo_Sans'] text-xs text-slate-500 pt-2">
+                        Si no recibiste el correo, revisa tu carpeta de spam
                       </p>
                     </div>
 
