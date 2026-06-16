@@ -3,6 +3,7 @@ import { ChevronDown } from 'lucide-react';
 
 export function Footer() {
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
+  const [showContactForm, setShowContactForm] = useState(false);
 
   const faqs = [
     { question: '¿Necesito una cuenta para usar Tech Hub ULS?', answer: 'No, puedes acceder como visitante, pero algunas funcionalidades requieren registro.' },
@@ -13,12 +14,12 @@ export function Footer() {
   ];
 
   return (
-    <footer className="bg-[#003082] w-full py-16 px-8">
+    <footer className="bg-[#003082] w-full py-16 px-8 text-sm">
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
           {/* PREGUNTAS FRECUENTES */}
           <div>
-            <h2 className="text-white text-lg font-bold mb-6">PREGUNTAS FRECUENTES</h2>
+            <h2 className="text-white text-sm font-bold mb-6">PREGUNTAS FRECUENTES</h2>
             <div className="space-y-3">
               {faqs.map((faq, index) => (
                 <div key={index} className="bg-[#0052CC] rounded-lg overflow-hidden">
@@ -47,7 +48,7 @@ export function Footer() {
           {/* PRIVACIDAD Y POLÍTICA */}
           <div>
             <div className="mb-8">
-              <h2 className="text-white text-lg font-bold mb-4">PRIVACIDAD Y POLÍTICA</h2>
+              <h2 className="text-white text-sm font-bold mb-4">PRIVACIDAD Y POLÍTICA</h2>
               <div className="bg-[#0052CC] rounded-lg px-4 py-3">
                 <p className="text-white text-sm font-medium">Acerca de COMPUS ONE</p>
               </div>
@@ -98,44 +99,82 @@ export function Footer() {
 
           {/* FORMULARIO DE CONTACTO */}
           <div>
-            <h2 className="text-white text-lg font-bold mb-6">FORMULARIO DE CONTACTO</h2>
-            <form className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <input
-                  type="text"
-                  placeholder="Nombre y Apellido"
-                  className="bg-[#0052CC] text-white placeholder-white/60 px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-white/30"
+            <h2 className="text-white text-sm font-bold mb-6">FORMULARIO DE CONTACTO</h2>
+            <button
+              type="button"
+              onClick={() => setShowContactForm(true)}
+              className="w-full bg-white text-[#003082] text-sm font-bold py-3 rounded-lg transition-colors hover:bg-slate-100 mb-4"
+            >
+              Formulario de Contacto
+            </button>
+            {showContactForm && (
+              <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+                <div
+                  className="absolute inset-0 bg-black/50"
+                  onClick={() => setShowContactForm(false)}
                 />
-                <input
-                  type="email"
-                  placeholder="Correo electrónico"
-                  className="bg-[#0052CC] text-white placeholder-white/60 px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-white/30"
-                />
+                <div className="relative w-full max-w-lg mx-4 bg-white rounded-2xl shadow-xl overflow-hidden">
+                  <div className="flex items-center justify-between px-6 py-4 bg-[#003082]">
+                    <h3 className="text-white text-sm font-bold">Formulario de Contacto</h3>
+                    <button
+                      onClick={() => setShowContactForm(false)}
+                      aria-label="Cerrar formulario"
+                      className="text-white opacity-90 hover:opacity-100 ml-4"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <div className="p-6">
+                    <form className="space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <input
+                          type="text"
+                          placeholder="Nombre y Apellido"
+                          className="w-full px-4 py-2 border rounded-lg text-[13px] focus:outline-none"
+                        />
+                        <input
+                          type="email"
+                          placeholder="Correo electrónico"
+                          className="w-full px-4 py-2 border rounded-lg text-[13px] focus:outline-none"
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <input
+                          type="tel"
+                          placeholder="Número de teléfono"
+                          className="w-full px-4 py-2 border rounded-lg text-[13px] focus:outline-none"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Ciudad"
+                          className="w-full px-4 py-2 border rounded-lg text-[13px] focus:outline-none"
+                        />
+                      </div>
+                      <textarea
+                        placeholder="Comentario o consulta..."
+                        rows={4}
+                        className="w-full px-4 py-2 border rounded-lg text-[13px] focus:outline-none resize-none"
+                      />
+                      <div className="flex gap-3">
+                        <button
+                          type="submit"
+                          className="flex-1 bg-[#003082] text-white font-bold py-2 rounded-lg"
+                        >
+                          Enviar mensaje
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowContactForm(false)}
+                          className="flex-0 px-4 py-2 border rounded-lg text-[13px]"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <input
-                  type="tel"
-                  placeholder="Número de teléfono"
-                  className="bg-[#0052CC] text-white placeholder-white/60 px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-white/30"
-                />
-                <input
-                  type="text"
-                  placeholder="Ciudad"
-                  className="bg-[#0052CC] text-white placeholder-white/60 px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-white/30"
-                />
-              </div>
-              <textarea
-                placeholder="Comentario o consulta..."
-                rows={4}
-                className="w-full bg-[#0052CC] text-white placeholder-white/60 px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-white/30 resize-none"
-              />
-              <button
-                type="submit"
-                className="w-full bg-[#003082] hover:bg-[#002563] text-white font-bold py-3 rounded-lg transition-colors border border-white/20"
-              >
-                Enviar mensaje
-              </button>
-            </form>
+            )}
           </div>
         </div>
 
